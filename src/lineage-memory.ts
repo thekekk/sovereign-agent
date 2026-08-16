@@ -31,8 +31,25 @@ export class LineageMemory {
   add(lesson: LineageLesson): void {
     const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
     const existing = this.lessons.get(key);
-    if (!existing || this.quality(lesson) > this.quality(existing)) {
+    if (!existing) {
       this.lessons.set(key, { ...lesson });
+      return;
+    }
+
+    // The same origin reporting the same lesson is one observation, not two.
+    if (existing.originId === lesson.originId) return;
+
+    // Independent origins strengthen the evidence, but confidence is capped so
+    // repeated observations cannot manufacture certainty.
+    const combined: LineageLesson = {
+      ...existing,
+      evidenceValue: existing.evidenceValue + lesson.evidenceValue,
+      occurrences: existing.occurrences + 1,
+      confidence: Math.min(0.95, existing.confidence + (lesson.confidence * (1 - existing.confidence) * 0.25)),
+      generation: Math.min(existing.generation, lesson.generation)
+    };
+    if (this.quality(combined) >= this.quality(existing)) {
+      this.lessons.set(key, combined);
     }
   }
 
