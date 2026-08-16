@@ -1,6 +1,7 @@
 import type { OutcomeSummary } from './outcome-ledger.js';
 import type { SurvivalSnapshot } from './survival.js';
-import { StrategyController, type CodingAction, type StrategyDecision } from './strategy-controller.js';
+import { StrategyController, type StrategyDecision } from './strategy-controller.js';
+import type { LineageStrategyMemory } from './lineage-strategy-memory.js';
 
 export interface StrategyExperience {
   strategy: string;
@@ -22,17 +23,22 @@ export interface LearnedStrategyDecision extends StrategyDecision {
 }
 
 /**
- * Bounded strategy selection: historical evidence can change preference among
- * allowed strategies, but cannot bypass the core survival policy.
+ * Canonical bounded strategy selector. Historical evidence and optional
+ * ancestral memory influence preference only after the survival policy allows
+ * work; memory cannot bypass the policy's stop/recovery decisions.
  */
 export class StrategyLearning {
-  constructor(private readonly policy = new StrategyController()) {}
+  constructor(
+    private readonly policy = new StrategyController(),
+    private readonly memory?: LineageStrategyMemory
+  ) {}
 
   decide(
     summary: OutcomeSummary,
     snapshot: SurvivalSnapshot,
     candidates: readonly StrategyCandidate[],
-    experience: readonly StrategyExperience[]
+    experience: readonly StrategyExperience[],
+    context = '*'
   ): LearnedStrategyDecision {
     const decision = this.policy.decide(summary, snapshot);
     if (decision.action === 'stop' || candidates.length === 0) {
@@ -46,8 +52,21 @@ export class StrategyLearning {
         const attempts = history?.attempts ?? 0;
         const successRate = attempts > 0 ? (history?.successes ?? 0) / attempts : 0;
         const netValue = (history?.totalValue ?? 0) - (history?.totalCost ?? 0);
-        const evidenceBonus = Math.min(1, attempts / 10) * (successRate * 0.7 + Math.max(-1, Math.min(1, netValue / Math.max(1, candidate.estimatedCost))) * 0.3);
-        return { candidate, score: candidate.basePriority + evidenceBonus };
+        const evidenceBonus = Math.min(1, attempts / 10) * (
+          successRate * 0.7 +
+          Math.max(-1, Math.min(1, netValue / Math.max(1, candidate.estimatedCost))) * 0.3
+        );
+        const lessons = this.memory?.lessonsFor({ strategyId: candidate.name, context }) ?? [];
+        const avoidPenalty = lessons
+          .filter(lesson => lesson.kind === 'avoid' && lesson.confidence >= 0.7)
+          .reduce((sum, lesson) => sum + Math.max(1, lesson.confidence * 2), 0);
+        const memoryBonus = lessons
+          .filter(lesson => lesson.kind === 'use' && lesson.confidence >= 0.5)
+          .reduce((sum, lesson) => sum + Math.min(0.5, lesson.confidence * 0.25), 0);
+        return {
+          candidate,
+          score: candidate.basePriority + evidenceBonus + memoryBonus - avoidPenalty
+        };
       })
       .sort((a, b) => b.score - a.score);
 
