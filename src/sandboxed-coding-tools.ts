@@ -1,6 +1,5 @@
-import { resolve, relative, isAbsolute } from 'node:path';
+import { resolve, relative, isAbsolute, sep } from 'node:path';
 import { ToolRegistry } from './tool-registry.js';
-import type { CodingToolDependencies } from './coding-toolset.js';
 
 export interface SandboxedCodingDependencies {
   workspaceRoot: string;
@@ -15,9 +14,7 @@ function safePath(root: string, candidate: string): string {
   const resolvedRoot = resolve(root);
   const resolved = resolve(resolvedRoot, candidate);
   const rel = relative(resolvedRoot, resolved);
-  if (rel === '..' || rel.startsWith(`..${require('node:path').sep}`) || isAbsolute(rel)) {
-    throw new Error('path escapes workspace');
-  }
+  if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) throw new Error('path escapes workspace');
   return resolved;
 }
 
