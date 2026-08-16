@@ -16,6 +16,7 @@ export class OutcomeToLineage {
   record(input: OutcomeLessonInput): LineageLesson {
     const kind: StrategyLessonKind = input.outcome.evidence.verified ? 'use' : 'avoid';
     const confidence = input.outcome.evidence.verified ? 0.7 : 0.8;
+    const generation = this.lineage.snapshot().generation;
     const lesson: LineageLesson = {
       id: `${kind}:${input.strategyId}:${input.context}`,
       strategyId: input.strategyId,
@@ -26,7 +27,7 @@ export class OutcomeToLineage {
       confidence,
       occurrences: 1,
       originId: input.originId,
-      generation: input.outcome.evidence.verified ? 1 : 1
+      generation
     };
     this.lineage.add(lesson);
     return lesson;
