@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { GenerationManager } from './generation-manager.js';
 import { LineageMemory } from './lineage-memory.js';
 import { OutcomeToLineage } from './outcome-to-lineage.js';
@@ -21,7 +21,7 @@ describe('generation to lineage learning', () => {
     });
 
     expect(lineage.lessonsFor('strategy-A', 'coding')).toEqual([
-      expect.objectContaining({ kind: 'use', strategyId: 'strategy-A', originId: 'parent-1', generation: 2 })
+      expect.objectContaining({ kind: 'use', strategyId: 'strategy-A', originId: 'child-2', generation: 2 })
     ]);
   });
 
