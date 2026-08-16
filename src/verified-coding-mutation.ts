@@ -11,7 +11,7 @@ export interface CodingMutationResult {
   evidence: VerificationEvidence;
 }
 
-/** Transaction boundary for coding work: checkpoint -> mutate -> test/verify -> rollback on failure. */
+/** Transaction boundary for coding work: checkpoint -> mutate -> test -> verify -> keep/rollback. */
 export class VerifiedCodingMutation {
   constructor(
     private readonly checkpoints: Pick<CheckpointManager, 'create' | 'rollback'>,
@@ -24,11 +24,23 @@ export class VerifiedCodingMutation {
     try {
       await this.deps.writeFile(path, content);
       const tests = await this.deps.runTests(testCommand);
-      const evidence = await this.verifier.verify({ path, content, tests });
-      if (!tests.passed || !evidence.verified) {
+
+      if (!tests.passed) {
         await this.checkpoints.rollback(checkpoint);
+        return {
+          checkpointId: checkpoint.id,
+          evidence: {
+            backend: 'local',
+            verified: false,
+            value: 0,
+            reason: 'repository tests failed'
+          }
+        };
       }
-      return { checkpointId: checkpoint.id, evidence: tests.passed ? evidence : { ...evidence, verified: false, value: 0, reason: 'repository tests failed' } };
+
+      const evidence = await this.verifier.verify({ path, content, tests });
+      if (!evidence.verified) await this.checkpoints.rollback(checkpoint);
+      return { checkpointId: checkpoint.id, evidence };
     } catch (error) {
       await this.checkpoints.rollback(checkpoint);
       throw error;
