@@ -19,7 +19,7 @@ export class LineageMemory {
 
   inherit(parent: LineageSnapshot): void {
     for (const lesson of parent.lessons) {
-      const key = `${lesson.strategy}:${lesson.type}:${lesson.context}:${lesson.lesson}`;
+      const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
       const existing = this.lessons.get(key);
       if (!existing || lesson.confidence > existing.confidence) {
         this.lessons.set(key, {
@@ -33,7 +33,7 @@ export class LineageMemory {
   }
 
   add(lesson: LineageLesson): void {
-    const key = `${lesson.strategy}:${lesson.type}:${lesson.context}:${lesson.lesson}`;
+    const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
     this.lessons.set(key, { ...lesson, generation: this.generation });
   }
 
@@ -41,9 +41,9 @@ export class LineageMemory {
     return { generation: this.generation, lessons: [...this.lessons.values()] };
   }
 
-  lessonsFor(strategy: string, context: string): LineageLesson[] {
+  lessonsFor(strategyId: string, context: string): LineageLesson[] {
     return [...this.lessons.values()].filter(
-      lesson => lesson.strategy === strategy && (lesson.context === context || lesson.context === '*')
+      lesson => lesson.strategyId === strategyId && (lesson.context === context || lesson.context === '*')
     );
   }
 }
