@@ -23,7 +23,7 @@ describe('worker lineage restart', () => {
       const lineage = new StrategyOutcomeToLineage(firstMemory, persistence);
       const worker = new WorkerLoop(
         new StrategyLearning(undefined, new LineageStrategyMemory(firstMemory)),
-        { record: (event: Omit<OutcomeEvent, 'id' | 'timestamp'>): OutcomeEvent => ({ ...event, id: 'event-1', timestamp: new Date().toISOString() }) },
+        { record: (event: OutcomeEvent): OutcomeEvent & { id: string; timestamp: string } => ({ ...event, id: 'event-1', timestamp: new Date().toISOString() }) },
         undefined,
         lineage,
         'coding',
