@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import type { LineageLesson, LineageMemory, LineageSnapshot } from './lineage-memory.js';
+import { LineageMemory, type LineageLesson, type LineageSnapshot } from './lineage-memory.js';
 
 /** Durable storage for lineage knowledge; runtime state is intentionally excluded. */
 export class LineagePersistence {
@@ -41,7 +41,7 @@ export class LineagePersistence {
   }
 
   loadSnapshot(generation: number): LineageSnapshot {
-    const memory = new (require('./lineage-memory.js').LineageMemory)(generation) as LineageMemory;
+    const memory = new LineageMemory(generation);
     this.loadInto(memory);
     return memory.snapshot();
   }
