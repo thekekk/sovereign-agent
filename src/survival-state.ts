@@ -5,13 +5,13 @@ import { AccountingLedger } from './accounting.js';
 interface StoredState {
   id: number;
   balance: number;
-  computeCostPerHour: number;
-  revenuePerHour: number;
+  compute_cost_per_hour: number;
+  revenue_per_hour: number;
   health: number;
   offspring: number;
   successes: number;
   failures: number;
-  lastHeartbeat: string;
+  last_heartbeat: string;
 }
 
 export class DurableSurvivalState {
