@@ -22,6 +22,10 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 - Conway-style evolving `SOUL` state
 - Immutable constitution boundary
 - Bounded lineage and worker proposals
+- Population/evolution controller for survival, replication and termination decisions
+- Child provisioning with exact parent-commit provenance
+- GitHub branch adapter and child CI observation boundary
+- Child survival/death accounting and bounded fitness feedback
 - Provider-neutral identity abstraction
 - Goose-style multi-provider registry
 - Goose-style extension boundary for native/MCP/ACP adapters
@@ -32,6 +36,59 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 - Typed model-directed coding worker with bounded read/replace/test actions
 - Optimistic-concurrency workspace writes
 
+## Evolution / survival loop
+
+The core loop is deliberately evidence-driven:
+
+```text
+                 task
+                  ↓
+            bounded worker
+                  ↓
+            inspect / edit
+                  ↓
+                test
+                  ↓
+          externally verified CI
+                  ↓
+        ┌─────────┴─────────┐
+        ↓                   ↓
+     failure              success
+        ↓                   ↓
+   recover / learn      value + fitness
+        ↓                   ↓
+        └──────────┬────────┘
+                   ↓
+             survival engine
+                   ↓
+             strategy policy
+                   ↓
+       ┌───────────┼───────────┐
+       ↓           ↓           ↓
+   continue      recover    replicate
+                               ↓
+                         child authorization
+                               ↓
+                       exact parent commit
+                               ↓
+                         isolated child branch
+                               ↓
+                           child CI
+                         ┌─────┴─────┐
+                         ↓           ↓
+                     survived    terminated
+                         ↓           ↓
+                  next generation  death
+```
+
+**Survival is not a prompt.** It is a measurable policy signal backed by resource state, historical outcomes and externally verified work.
+
+A child cannot survive merely because it claims success: its observed CI run, head/source commit and lineage provenance must agree. Failed or unverifiable children are terminated and do not receive reproduction authority.
+
+Replication is bounded by generation, worker budget, runway and economic viability. The population controller and survival strategy must agree before a child is authorized.
+
+The system is intentionally **not unrestricted self-preservation**. The agent cannot rewrite the constitution, bypass policy, escape its workspace, arbitrarily spend funds, or create unrestricted child processes because survival is threatened.
+
 ## Feature parity status
 
 | Capability | Status |
@@ -41,6 +98,7 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 | Mortality state | Native |
 | Strategy selection / evolution | Native foundation |
 | Bounded replication / lineage | Native policy layer |
+| Child lifecycle / survival accounting | Native foundation |
 | Skills (`SKILL.md`) | Native registry |
 | Soul / evolving identity document | Native storage |
 | Constitution / protected rules | Native guard |
@@ -62,32 +120,7 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 | Cloud-scale worker orchestration | Pending adapter |
 | Desktop UI | Not a core goal |
 
-The adapter boundaries are deliberate: they let the runtime adopt the real Conway/OpenHands/Goose integrations without coupling survival logic to a single infrastructure provider.
-
-## Survival model
-
-The objective is **survival pressure, not unrestricted self-preservation**. The agent receives an explicit resource state: balance, compute burn, revenue and historical outcomes. It must create useful value and maintain positive economics to remain viable.
-
-```text
-             useful work
-                  ↓
-        ┌────── outcome ──────┐
-        ↓                     ↓
-      success               failure
-        ↓                     ↓
-  more resources       learn / recover
-        ↓                     ↓
-    thriving              stressed
-        ↓                     ↓
- controlled growth       critical
-        ↓                     ↓
-  bounded replication*  shutdown → dead
-
-* replication is an evaluated policy decision with runway,
-  profitability and worker-count limits.
-```
-
-The agent cannot rewrite the constitution, bypass policy, escape its workspace, arbitrarily spend funds, or create unrestricted child processes just because survival is threatened.
+The adapter boundaries are deliberate: they let the runtime adopt real Conway/OpenHands/Goose integrations without coupling survival logic to a single infrastructure provider.
 
 ## Coding loop
 
@@ -99,16 +132,24 @@ Every action can emit an event and every completed task can contribute a measura
 
 ## Roadmap
 
-1. Model-driven patch/edit tool with diff validation — **in progress**
-2. Git checkpoint / rollback workflow
-3. GitHub issue/PR automation
-4. OpenHands-compatible coding adapter
-5. Durable task economics and compute metering
-6. Real provider adapters (OpenAI/Anthropic/Google/local/etc.)
-7. MCP/ACP transport adapters and extension installation
-8. Conway cloud/wallet/x402/ERC-8004 adapters behind policy gates
-9. Agent-to-agent messaging and child lifecycle health checks
-10. Controlled self-improvement with audit trails and rollback
+1. **Model-driven patch/edit tool with diff validation** — in progress
+2. **Git checkpoint / rollback workflow** — next
+3. **GitHub issue/PR automation**
+4. **OpenHands-compatible coding adapter**
+5. **Durable task economics and compute metering**
+6. **Real provider adapters** (OpenAI/Anthropic/Google/local/etc.)
+7. **MCP/ACP transport adapters and extension installation**
+8. **Conway cloud/wallet/x402/ERC-8004 adapters behind policy gates**
+9. **Agent-to-agent messaging and child lifecycle health checks**
+10. **Controlled self-improvement with audit trails and rollback**
+11. **Generation manager: repeated parent → child → evaluation cycles**
+12. **Long-running autonomous daemon with bounded permissions and restart recovery**
+
+## Development principle
+
+`main` is the stable boundary. Autonomous work happens on isolated branches and must pass type-checking/tests before it is considered viable. Experimental lineage branches are evaluation artifacts, not automatically mergeable descendants.
+
+The project is designed so that **successful behavior can reproduce and unsuccessful behavior can die**, while every transition remains auditable and resource-bounded.
 
 ## Run
 
