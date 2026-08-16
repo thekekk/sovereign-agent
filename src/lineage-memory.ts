@@ -21,7 +21,7 @@ export class LineageMemory {
     for (const lesson of parent.lessons) {
       const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
       const existing = this.lessons.get(key);
-      if (!existing || lesson.confidence > existing.confidence) {
+      if (!existing || this.quality(lesson) > this.quality(existing)) {
         this.lessons.set(key, {
           ...lesson,
           originId: lesson.originId,
@@ -34,7 +34,10 @@ export class LineageMemory {
 
   add(lesson: LineageLesson): void {
     const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
-    this.lessons.set(key, { ...lesson, generation: this.generation });
+    const existing = this.lessons.get(key);
+    if (!existing || this.quality(lesson) > this.quality(existing)) {
+      this.lessons.set(key, { ...lesson, generation: this.generation });
+    }
   }
 
   snapshot(): LineageSnapshot {
@@ -45,5 +48,9 @@ export class LineageMemory {
     return [...this.lessons.values()].filter(
       lesson => lesson.strategyId === strategyId && (lesson.context === context || lesson.context === '*')
     );
+  }
+
+  private quality(lesson: LineageLesson): number {
+    return lesson.confidence * Math.max(1, lesson.occurrences) * Math.max(1, Math.abs(lesson.evidenceValue));
   }
 }
