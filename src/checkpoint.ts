@@ -15,11 +15,7 @@ export interface CheckpointPolicy {
   maxCheckpoints: number;
 }
 
-/**
- * Safe version-control boundary for autonomous work. The worker can create
- * checkpoints and roll back to a known commit, but the VCS implementation is
- * injected and remains outside the model's direct authority.
- */
+/** Safe version-control boundary for autonomous work. The VCS implementation is injected and remains outside model authority. */
 export class CheckpointManager {
   private readonly checkpoints: CheckpointRef[] = [];
 
@@ -36,10 +32,8 @@ export class CheckpointManager {
     if (!reason.trim()) throw new Error('checkpoint reason is required');
     const state = await this.vcs.status();
     if (!state.clean) throw new Error('checkpoint requires a clean working tree');
-
     const commit = await this.vcs.checkpoint(`sovereign: ${reason.trim()}`);
     if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error('VCS returned an invalid commit identifier');
-
     const checkpoint: CheckpointRef = {
       id: `checkpoint-${commit.slice(0, 12)}`,
       commit,
@@ -55,8 +49,17 @@ export class CheckpointManager {
     if (!this.checkpoints.some(item => item.id === checkpoint.id && item.commit === checkpoint.commit)) {
       throw new Error('checkpoint is not owned by this manager');
     }
-    if (!/^[0-9a-f]{40}$/.test(checkpoint.commit)) throw new Error('invalid checkpoint commit');
     await this.vcs.rollback(checkpoint.commit);
+  }
+
+  async rollbackById(id: string): Promise<void> {
+    const checkpoint = this.checkpoints.find(item => item.id === id);
+    if (!checkpoint) throw new Error(`checkpoint not found: ${id}`);
+    await this.rollback(checkpoint);
+  }
+
+  find(id: string): CheckpointRef | undefined {
+    return this.checkpoints.find(item => item.id === id);
   }
 
   list(): readonly CheckpointRef[] {
