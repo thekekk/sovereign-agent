@@ -1,4 +1,4 @@
-import type { ChildCiLifecycle, ChildState } from './child-ci-lifecycle.js';
+import type { ChildLifecycleResult } from './child-ci-lifecycle.js';
 
 export interface ParentFitnessDelta {
   childId: string;
@@ -13,13 +13,13 @@ export class ChildSurvivalAccounting {
     if (survivalValue < 0 || failurePenalty < 0) throw new Error('fitness values must be non-negative');
   }
 
-  record(childId: string, result: ChildState): ParentFitnessDelta {
+  record(childId: string, result: ChildLifecycleResult): ParentFitnessDelta {
     if (!childId.trim()) throw new Error('childId is required');
-    if (result === 'survived') {
-      return { childId, survived: true, fitnessDelta: this.survivalValue, reason: 'Child passed externally verified lifecycle' };
+    if (result.state === 'survived') {
+      return { childId, survived: true, fitnessDelta: this.survivalValue, reason: result.reason };
     }
-    if (result === 'terminated') {
-      return { childId, survived: false, fitnessDelta: -this.failurePenalty, reason: 'Child failed externally verified lifecycle' };
+    if (result.state === 'terminated') {
+      return { childId, survived: false, fitnessDelta: -this.failurePenalty, reason: result.reason };
     }
     return { childId, survived: false, fitnessDelta: 0, reason: 'Child lifecycle remains unresolved' };
   }
