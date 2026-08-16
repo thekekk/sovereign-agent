@@ -14,25 +14,22 @@ function mutationResult(verified: boolean) {
 describe('UnifiedLearningLoop', () => {
   it('does not execute mutation when recovery is unsafe', async () => {
     const execute = vi.fn();
-    const recovery = { reconcile: vi.fn().mockResolvedValue({ safeToContinue: false, reason: 'rollback required' }) };
-    const learning = { decide: vi.fn().mockReturnValue({ action: 'continue', selectedStrategy: 'A', confidence: 1, fitness: 1, survival: 1, reason: 'ok' }) };
-    const loop = new UnifiedLearningLoop(recovery as never, learning as never, { execute } as never);
+    const autonomy = { decide: vi.fn().mockResolvedValue({ action: 'stop', selectedStrategy: null, confidence: 0, fitness: 0, survival: 0, reason: 'rollback required', allowed: false }) };
+    const loop = new UnifiedLearningLoop(autonomy as never, { execute } as never);
 
-    const result = await loop.run(summary, snapshot, [], [], 'build', 'A', 'child-1');
-    expect(result.allowed).toBe(false);
+    const result = await loop.decideAndExecute(summary, snapshot, [], [], 'build', { path: 'x.ts', content: 'x' });
+    expect(result.decision.allowed).toBe(false);
     expect(execute).not.toHaveBeenCalled();
-    expect(learning.decide).not.toHaveBeenCalled();
   });
 
   it('executes allowed work and returns its verified outcome', async () => {
     const execute = vi.fn().mockResolvedValue(mutationResult(true));
-    const recovery = { reconcile: vi.fn().mockResolvedValue({ safeToContinue: true, reason: 'ok' }) };
-    const learning = { decide: vi.fn().mockReturnValue({ action: 'continue', selectedStrategy: 'A', confidence: 1, fitness: 1, survival: 1, reason: 'ok' }) };
-    const loop = new UnifiedLearningLoop(recovery as never, learning as never, { execute } as never);
+    const autonomy = { decide: vi.fn().mockResolvedValue({ action: 'continue', selectedStrategy: 'A', confidence: 1, fitness: 1, survival: 1, reason: 'ok', allowed: true }) };
+    const loop = new UnifiedLearningLoop(autonomy as never, { execute } as never);
 
-    const result = await loop.run(summary, snapshot, [], [], 'build', 'A', 'child-1');
-    expect(result.allowed).toBe(true);
-    expect(result.outcome?.evidence.verified).toBe(true);
-    expect(execute).toHaveBeenCalledWith('build', 'A', 'child-1');
+    const result = await loop.decideAndExecute(summary, snapshot, [], [], 'build', { path: 'build', content: 'A' });
+    expect(result.decision.allowed).toBe(true);
+    expect(result.mutation?.evidence.verified).toBe(true);
+    expect(execute).toHaveBeenCalledWith('build', 'A', undefined);
   });
 });
