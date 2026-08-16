@@ -44,7 +44,7 @@ export class LineageMemory {
     const combined: LineageLesson = {
       ...existing,
       evidenceValue: existing.evidenceValue + lesson.evidenceValue,
-      occurrences: existing.occurrences + 1,
+      occurrences: existing.occurrences + Math.max(1, lesson.occurrences),
       confidence: Math.min(0.95, existing.confidence + (lesson.confidence * (1 - existing.confidence) * 0.25)),
       generation: Math.min(existing.generation, lesson.generation)
     };
