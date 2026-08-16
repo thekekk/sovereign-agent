@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AutonomyLearningLoop } from './autonomy-learning-loop.js';
-import type { StrategyLearningWithMemory } from './strategy-learning-with-memory.js';
+import type { StrategyLearning } from './strategy-learning.js';
 
 const baseArgs = [
   { attempts: 0, successfulAttempts: 0, verifiedValue: 0, totalCost: 0 } as never,
@@ -11,7 +11,7 @@ const baseArgs = [
 
 describe('AutonomyLearningLoop', () => {
   it('stops before learning when recovery is unsafe', async () => {
-    const learning = { decide: vi.fn() } as unknown as StrategyLearningWithMemory;
+    const learning = { decide: vi.fn() } as unknown as StrategyLearning;
     const recovery = { reconcile: vi.fn().mockResolvedValue({ safeToContinue: false, reason: 'rollback pending' }) };
     const loop = new AutonomyLearningLoop(recovery, learning);
 
@@ -24,7 +24,7 @@ describe('AutonomyLearningLoop', () => {
   });
 
   it('allows learned selection after recovery succeeds', async () => {
-    const learning = { decide: vi.fn().mockReturnValue({ action: 'continue', reason: 'strategy selected', selectedStrategy: 'good', confidence: 0.9 }) } as unknown as StrategyLearningWithMemory;
+    const learning = { decide: vi.fn().mockReturnValue({ action: 'continue', reason: 'strategy selected', selectedStrategy: 'good', confidence: 0.9 }) } as unknown as StrategyLearning;
     const recovery = { reconcile: vi.fn().mockResolvedValue({ safeToContinue: true, reason: 'recovered' }) };
     const loop = new AutonomyLearningLoop(recovery, learning);
 
@@ -36,7 +36,7 @@ describe('AutonomyLearningLoop', () => {
   });
 
   it('never converts a learning stop decision into permission', async () => {
-    const learning = { decide: vi.fn().mockReturnValue({ action: 'stop', reason: 'insufficient runway', selectedStrategy: null, confidence: 0 }) } as unknown as StrategyLearningWithMemory;
+    const learning = { decide: vi.fn().mockReturnValue({ action: 'stop', reason: 'insufficient runway', selectedStrategy: null, confidence: 0 }) } as unknown as StrategyLearning;
     const recovery = { reconcile: vi.fn().mockResolvedValue({ safeToContinue: true, reason: 'recovered' }) };
     const loop = new AutonomyLearningLoop(recovery, learning);
 
