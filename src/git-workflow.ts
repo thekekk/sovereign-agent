@@ -15,14 +15,14 @@ export class GitWorkflow implements Tool<GitInput, GitResult> {
   constructor(private readonly cwd = process.env.SOVEREIGN_WORKSPACE ?? '.sovereign/workspace') {}
 
   private async run(args: string[]): Promise<string> {
-    const { stdout, stderr } = await exec('git', args, { cwd, maxBuffer: 500_000 });
+    const { stdout, stderr } = await exec('git', args, { cwd: this.cwd, maxBuffer: 500_000 });
     return `${stdout}${stderr}`.trim();
   }
 
   async execute(input: GitInput, _context: ToolContext): Promise<GitResult> {
     switch (input.command) {
       case 'status': return { output: await this.run(['status', '--short']) };
-      case 'diff': return { output: await this.run(['diff', '--no-ext-diff', '--'] ) };
+      case 'diff': return { output: await this.run(['diff', '--no-ext-diff', '--']) };
       case 'checkpoint': {
         const message = input.message?.trim() || 'agent checkpoint';
         await this.run(['add', '--all']);
