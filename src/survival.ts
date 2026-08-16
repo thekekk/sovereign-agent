@@ -24,13 +24,13 @@ export interface SurvivalDecision {
  * unrestricted access to money, credentials, or the host.
  */
 export class SurvivalEngine {
-  constructor(private readonly minimumBalance = 1) {}
+  constructor(private readonly minimumBalance = 0) {}
 
   evaluate(s: SurvivalSnapshot): SurvivalDecision {
     const burn = Math.max(0, s.computeCostPerHour - s.revenuePerHour);
     const runwayHours = burn === 0 ? Infinity : Math.max(0, s.balance / burn);
 
-    if (s.balance < this.minimumBalance || s.health <= 0) {
+    if (s.balance <= this.minimumBalance || s.health <= 0) {
       return { state: 'dead', runwayHours, priority: 'shutdown', reason: 'Resources or health exhausted' };
     }
     if (runwayHours < 2 || s.health < 20) {
