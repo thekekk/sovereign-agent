@@ -1,4 +1,5 @@
 import type { LineageLesson, LineageMemory } from './lineage-memory.js';
+import type { LineagePersistence } from './lineage-persistence.js';
 
 export interface StrategyOutcomeLineageInput {
   strategyId: string;
@@ -11,7 +12,10 @@ export interface StrategyOutcomeLineageInput {
 
 /** Converts durable worker outcomes into inherited USE/AVOID knowledge. */
 export class StrategyOutcomeToLineage {
-  constructor(private readonly lineage: LineageMemory) {}
+  constructor(
+    private readonly lineage: LineageMemory,
+    private readonly persistence?: Pick<LineagePersistence, 'save'>
+  ) {}
 
   record(input: StrategyOutcomeLineageInput): LineageLesson {
     if (!input.strategyId.trim()) throw new Error('strategyId is required');
@@ -34,6 +38,7 @@ export class StrategyOutcomeToLineage {
       generation: this.lineage.snapshot().generation
     };
     this.lineage.add(lesson);
+    this.persistence?.save(this.lineage.snapshot());
     return lesson;
   }
 }
