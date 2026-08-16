@@ -1,6 +1,6 @@
 # Sovereign Agent
 
-A modular autonomous-agent runtime inspired by Conway Automaton, with stronger execution controls and a path toward autonomous software engineering.
+A modular autonomous-agent runtime inspired by Conway Automaton, with stronger execution controls and a survival/evolution layer for controlled autonomous growth.
 
 ## Current architecture
 
@@ -10,13 +10,41 @@ A modular autonomous-agent runtime inspired by Conway Automaton, with stronger e
 - Sandboxed command executor with allowlists, workspace containment, timeouts and output limits
 - Heartbeat scheduler
 - Autonomous coding iteration loop
+- Outcome ledger for measuring strategy value, cost and success
+- Survival engine that converts economic/compute health into operational priorities
+- Evolution engine that selects successful strategies and permits controlled worker replication only when the simulated agent is thriving
 - CI/type-checking foundation
+
+## Survival model
+
+The goal is **survival pressure, not unrestricted self-preservation**. The agent receives an explicit resource state: balance, compute burn, revenue, health and historical outcomes. It must optimize useful work and positive unit economics to remain alive in the simulation.
+
+The lifecycle is:
+
+```text
+             useful work
+                  ↓
+        ┌────── outcome ──────┐
+        ↓                     ↓
+      success               failure
+        ↓                     ↓
+  more resources       learn / recover
+        ↓                     ↓
+    thriving              stressed
+        ↓                     ↓
+ controlled growth       critical
+        ↓                     ↓
+  spawn workers*          shutdown
+
+* replication is a policy decision; the engine itself does not spawn arbitrary
+  processes, move funds, or evade shutdown controls.
+```
+
+A failed agent can reach a terminal `dead` state in the simulation. A successful agent can earn enough positive value to enter `thriving`, after which the evolution layer may recommend controlled replication. This creates the survival/evolution pressure from the original concept while keeping actual host, wallet and deployment operations behind explicit capability and policy boundaries.
 
 ## Coding loop
 
-The runtime can iterate toward a coding goal by asking the model for the next implementation step, executing the configured test command inside the controlled workspace, and feeding the result back into the next iteration.
-
-This is deliberately separated from direct host administration. A future coding backend will add file-edit and Git operations behind the same policy boundary.
+The runtime can iterate toward a coding goal by inspecting a workspace, proposing an implementation step, executing permitted tools, running tests, recording the outcome, and feeding the result into the next iteration. Git checkpoints and rollback are intended to make experimentation recoverable.
 
 ## Roadmap
 
@@ -24,9 +52,9 @@ This is deliberately separated from direct host administration. A future coding 
 2. Git checkpoint / rollback workflow
 3. GitHub issue/PR integration
 4. OpenHands-compatible coding backend
-5. Browser/web research tools
-6. Multi-agent delegation and worker pools
-7. Wallet/treasury adapters with hard spending limits
+5. Durable survival state backed by SQLite
+6. Revenue/compute accounting adapters
+7. Controlled worker provisioning with hard quotas
 8. Signed action ledger and identity
 9. Self-evaluation and controlled self-improvement
 10. Optional Conway-compatible economic/replication modules
