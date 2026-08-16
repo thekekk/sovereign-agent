@@ -1,4 +1,4 @@
-import type { CheckpointManager } from './checkpoint.js';
+import type { CheckpointManager, CheckpointRef } from './checkpoint.js';
 import type { VerificationEvidence, VerificationProvider } from './verification.js';
 
 export interface MutationExecution<T = unknown> {
@@ -14,17 +14,17 @@ export class VerifiedCheckpointRunner<T = unknown> {
   ) {}
 
   async run(mutate: () => Promise<T>): Promise<{ execution: MutationExecution<T> | null; evidence: VerificationEvidence }> {
-    const checkpointId = await this.checkpoints.create();
+    const checkpoint: CheckpointRef = await this.checkpoints.create('pre-mutation');
     try {
       const result = await mutate();
       const evidence = await this.verifier.verify(result);
       if (!evidence.verified) {
-        await this.checkpoints.rollback(checkpointId);
+        await this.checkpoints.rollback(checkpoint);
         return { execution: null, evidence };
       }
-      return { execution: { result, checkpointId }, evidence };
+      return { execution: { result, checkpointId: checkpoint.id }, evidence };
     } catch (error) {
-      await this.checkpoints.rollback(checkpointId);
+      await this.checkpoints.rollback(checkpoint);
       throw error;
     }
   }
