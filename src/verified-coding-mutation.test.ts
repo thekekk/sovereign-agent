@@ -27,8 +27,7 @@ describe('VerifiedCodingMutation', () => {
   it('rolls back when tests fail', async () => {
     const { runner, events } = harness({ passed: false }, evidence(true));
     const result = await runner.execute('src/x.ts', 'bad');
-    expect(events).toEqual(['checkpoint:before coding mutation src/x.ts', 'write', 'test']);
-    expect(events).toContain('rollback');
+    expect(events).toEqual(['checkpoint:before coding mutation src/x.ts', 'write', 'test', 'rollback']);
     expect(result.evidence.verified).toBe(false);
   });
 
