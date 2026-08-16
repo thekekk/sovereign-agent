@@ -3,6 +3,7 @@ import type { OutcomeSummary } from './outcome-ledger.js';
 import type { SurvivalSnapshot } from './survival.js';
 import type { StrategyCandidate, StrategyExperience, LearnedStrategyDecision } from './strategy-learning.js';
 import { StrategyLearningWithMemory } from './strategy-learning-with-memory.js';
+import { StrategyController } from './strategy-controller.js';
 
 export interface AutonomyLearningDecision extends LearnedStrategyDecision {
   allowed: boolean;
@@ -13,7 +14,8 @@ export interface AutonomyLearningDecision extends LearnedStrategyDecision {
 export class AutonomyLearningLoop {
   constructor(
     private readonly recovery: Pick<RecoveryRunner, 'reconcile'>,
-    private readonly learning: StrategyLearningWithMemory
+    private readonly learning: StrategyLearningWithMemory,
+    private readonly policy = new StrategyController()
   ) {}
 
   async decide(
@@ -25,10 +27,11 @@ export class AutonomyLearningLoop {
   ): Promise<AutonomyLearningDecision> {
     const recovery = await this.recovery.reconcile();
     if (!recovery.safeToContinue) {
+      const policy = this.policy.decide(summary, snapshot);
       return {
+        ...policy,
         allowed: false,
         reason: `recovery required: ${recovery.reason}`,
-        action: 'stop',
         selectedStrategy: null,
         confidence: 0
       };
