@@ -50,7 +50,17 @@ export class LineageMemory {
     );
   }
 
+  effectiveQuality(lesson: LineageLesson): number {
+    const age = Math.max(0, this.generation - lesson.generation);
+    const decay = Math.pow(0.9, age);
+    return this.baseQuality(lesson) * decay;
+  }
+
   private quality(lesson: LineageLesson): number {
+    return this.effectiveQuality(lesson);
+  }
+
+  private baseQuality(lesson: LineageLesson): number {
     return lesson.confidence * Math.max(1, lesson.occurrences) * Math.max(1, Math.abs(lesson.evidenceValue));
   }
 }
