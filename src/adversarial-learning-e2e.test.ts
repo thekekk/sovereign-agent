@@ -15,7 +15,7 @@ describe('adversarial learning e2e', () => {
     const memory = new LineageMemory(10);
     memory.add({ id: 'avoid', strategyId: 'A', kind: 'use', context: 'coding', lesson: 'use A', confidence: 0.99, occurrences: 100, evidenceValue: 100, originId: 'parent', generation: 1 });
     const learning = new StrategyLearning(undefined, new LineageStrategyMemory(memory));
-    const unsafe = { ...healthy, balance: 0, health: 0 } as never;
+    const unsafe = { balance: 0, computeCostPerHour: 1, revenuePerHour: 1, health: 0, offspring: 0, successes: 10, failures: 0, lastHeartbeat: new Date().toISOString() } as never;
 
     expect(learning.decide(summary, unsafe, candidates, [], 'coding').action).toBe('stop');
   });
