@@ -1,6 +1,7 @@
 import type { OutcomeLedger, OutcomeEvent } from './outcome-ledger.js';
 import { StrategyLearning, type StrategyCandidate, type StrategyExperience, type LearnedStrategyDecision } from './strategy-learning.js';
 import type { SurvivalSnapshot } from './survival.js';
+import type { StrategyFitnessAdapter } from './strategy-fitness-adapter.js';
 
 export interface WorkerExecution {
   strategy: string;
@@ -26,7 +27,8 @@ export interface WorkerLoopResult {
 export class WorkerLoop {
   constructor(
     private readonly learning = new StrategyLearning(),
-    private readonly ledger: Pick<OutcomeLedger, 'record'>
+    private readonly ledger: Pick<OutcomeLedger, 'record'>,
+    private readonly fitness?: StrategyFitnessAdapter
   ) {}
 
   async run(
@@ -55,6 +57,14 @@ export class WorkerLoop {
         confidence: decision.confidence
       }
     });
+
+    this.fitness?.record({
+      strategyId: execution.strategy,
+      verified: execution.success,
+      value: execution.value,
+      cost: execution.cost
+    });
+
     return { decision, execution, outcome };
   }
 }
