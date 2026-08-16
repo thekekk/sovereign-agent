@@ -22,11 +22,6 @@ export interface LearnedStrategyDecision extends StrategyDecision {
   confidence: number;
 }
 
-/**
- * Canonical bounded strategy selector. Historical evidence and optional
- * ancestral memory influence preference only after the survival policy allows
- * work; memory cannot bypass the policy's stop/recovery decisions.
- */
 export class StrategyLearning {
   constructor(
     private readonly policy = new StrategyController(),
