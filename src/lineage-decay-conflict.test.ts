@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LineageMemory } from './lineage-memory.js';
+import { LineageMemory, type LineageLesson } from './lineage-memory.js';
 import { resolveLineageConflict } from './lineage-conflict-resolution.js';
 
 describe('decay-aware lineage conflict', () => {
@@ -8,8 +8,8 @@ describe('decay-aware lineage conflict', () => {
     memory.add({ id: 'old-use', strategyId: 'A', kind: 'use', context: 'coding', lesson: 'u', confidence: 1, occurrences: 1, evidenceValue: 10, originId: 'p', generation: 1 });
     memory.add({ id: 'fresh-avoid', strategyId: 'A', kind: 'avoid', context: 'coding', lesson: 'a', confidence: 1, occurrences: 1, evidenceValue: 10, originId: 'c', generation: 10 });
 
-    const lessons = memory.lessonsFor('A', 'coding');
-    const resolved = resolveLineageConflict(lessons, lesson => memory.effectiveQuality(lesson));
+    const lessons: LineageLesson[] = memory.lessonsFor('A', 'coding');
+    const resolved = resolveLineageConflict(lessons, lesson => memory.effectiveQuality(lesson as LineageLesson));
     expect(resolved.winner).toBe('avoid');
   });
 });
