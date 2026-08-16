@@ -1,6 +1,5 @@
 import { resolveLineageConflict } from './lineage-conflict-resolution.js';
-import type { LineageMemory } from './lineage-memory.js';
-import type { StrategyLesson } from './strategy-memory.js';
+import type { LineageLesson, LineageMemory } from './lineage-memory.js';
 
 export interface LineageDecisionContext {
   strategyId: string;
@@ -11,21 +10,12 @@ export interface LineageDecisionContext {
 export class LineageStrategyMemory {
   constructor(private readonly lineage: LineageMemory) {}
 
-  lessonsFor(decision: LineageDecisionContext): readonly StrategyLesson[] {
-    return this.lineage.lessonsFor(decision.strategyId, decision.context).map(lesson => ({
-      id: `${lesson.kind}:${lesson.strategyId}:${lesson.context}`,
-      strategyId: lesson.strategyId,
-      kind: lesson.kind,
-      context: lesson.context,
-      lesson: lesson.lesson,
-      evidenceValue: lesson.evidenceValue,
-      confidence: lesson.confidence,
-      occurrences: lesson.occurrences
-    }));
+  lessonsFor(decision: LineageDecisionContext): readonly LineageLesson[] {
+    return this.lineage.lessonsFor(decision.strategyId, decision.context);
   }
 
   resolve(decision: LineageDecisionContext) {
-    return resolveLineageConflict(this.lessonsFor(decision));
+    return resolveLineageConflict(this.lessonsFor(decision), lesson => this.lineage.effectiveQuality(lesson));
   }
 
   shouldAvoid(decision: LineageDecisionContext, threshold = 0.7): boolean {
@@ -33,7 +23,7 @@ export class LineageStrategyMemory {
     return resolved.winner === 'avoid' && Math.abs(resolved.score) > 0 && resolved.avoid.some(lesson => lesson.confidence >= threshold);
   }
 
-  reusable(decision: LineageDecisionContext, threshold = 0.5): readonly StrategyLesson[] {
+  reusable(decision: LineageDecisionContext, threshold = 0.5): readonly LineageLesson[] {
     const resolved = this.resolve(decision);
     return resolved.winner === 'use'
       ? resolved.use.filter(lesson => lesson.confidence >= threshold)
