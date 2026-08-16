@@ -43,7 +43,7 @@ export class GenerationManager {
     if (!Number.isInteger(generation) || generation < 1) throw new Error('child generation must be a positive integer');
 
     const lifecycle = this.lifecycle.finalize(observation, expectedSourceCommit);
-    const fitness = this.accounting.record(childId, lifecycle.state);
+    const fitness = this.accounting.record(childId, lifecycle);
     return { childId, generation, lifecycle, fitness };
   }
 }
