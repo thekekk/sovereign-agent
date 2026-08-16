@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LineageMemory } from './lineage-memory.js';
 import { LineageStrategyMemory } from './lineage-strategy-memory.js';
 import { StrategyLearning } from './strategy-learning.js';
+import { StrategyController } from './strategy-controller.js';
 
 const lesson = (strategyId: string, kind: 'use' | 'avoid', confidence: number, generation = 1) => ({
   id: `${kind}:${strategyId}:build`, strategyId, kind, context: 'build', lesson: `${kind} ${strategyId}`,
