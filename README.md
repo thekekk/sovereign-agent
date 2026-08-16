@@ -28,6 +28,9 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 - Goose-style reusable recipes/task definitions
 - Capability matrix tracking implemented vs adapter/pending features
 - CI/type-checking foundation
+- Isolated GitHub autonomy boundary with draft-PR workflow
+- Typed model-directed coding worker with bounded read/replace/test actions
+- Optimistic-concurrency workspace writes
 
 ## Feature parity status
 
@@ -50,7 +53,8 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 | MCP extension boundary | Adapter boundary |
 | ACP extension boundary | Adapter boundary |
 | Goose recipes | Native definitions |
-| Git/GitHub automation | In progress |
+| Git/GitHub automation | Native foundation / in progress |
+| Model-directed coding actions | Native foundation |
 | Real Conway cloud provisioning | Pending adapter |
 | Real wallet / USDC / x402 payments | Pending adapter |
 | ERC-8004 registration | Pending adapter |
@@ -95,7 +99,7 @@ Every action can emit an event and every completed task can contribute a measura
 
 ## Roadmap
 
-1. Model-driven patch/edit tool with diff validation
+1. Model-driven patch/edit tool with diff validation — **in progress**
 2. Git checkpoint / rollback workflow
 3. GitHub issue/PR automation
 4. OpenHands-compatible coding adapter
