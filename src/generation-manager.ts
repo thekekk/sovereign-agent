@@ -2,9 +2,10 @@ import { EvolutionController, type EvolutionDecision, type EvolutionInput } from
 import { ChildCiLifecycle, type ChildCiObservation, type ChildLifecycleResult } from './child-ci-lifecycle.js';
 import { ChildSurvivalAccounting, type ParentFitnessDelta } from './child-survival-accounting.js';
 import { GenerationLineage } from './generation-lineage.js';
-import { contextForChild, type GenerationAgentContext } from './generation-agent-context.js';
+import { contextForChild, toCodingLearningContext, type GenerationAgentContext } from './generation-agent-context.js';
 import type { ChildLineage } from './lineage-reproduction.js';
 import type { LineageSnapshot } from './lineage-memory.js';
+import type { CodingMutationLearningContext } from './verified-coding-mutation.js';
 
 export interface GenerationEvaluation {
   generation: number;
@@ -44,6 +45,10 @@ export class GenerationManager {
 
   createAgentContext(child: ChildLineage, strategyId: string, context: string): GenerationAgentContext {
     return contextForChild(child, strategyId, context);
+  }
+
+  createCodingLearningContext(child: ChildLineage, strategyId: string, context: string): CodingMutationLearningContext {
+    return toCodingLearningContext(this.createAgentContext(child, strategyId, context));
   }
 
   finalizeChild(
