@@ -1,21 +1,27 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
 export interface SovereignIdentity {
   id: string;
-  publicKey: string;
+  publicKeyFingerprint: string;
   chain?: string;
   address?: string;
   createdAt: string;
 }
 
+/** Provider-neutral identity metadata. It deliberately does not expose private key material. */
 export class IdentityManager {
   private identity?: SovereignIdentity;
 
   create(): SovereignIdentity {
     if (this.identity) return this.identity;
-    const seed = randomBytes(32).toString('hex');
-    const publicKey = randomBytes(32).toString('hex');
-    this.identity = { id: randomUUID(), publicKey: `${publicKey}:${seed.slice(0, 8)}`, createdAt: new Date().toISOString() };
+    const keyMaterial = randomBytes(32);
+    const fingerprint = createHash('sha256').update(keyMaterial).digest('hex');
+    this.identity = {
+      id: randomUUID(),
+      publicKeyFingerprint: fingerprint,
+      createdAt: new Date().toISOString()
+    };
+    keyMaterial.fill(0);
     return this.identity;
   }
 
