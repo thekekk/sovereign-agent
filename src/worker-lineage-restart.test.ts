@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { OutcomeEvent } from './outcome-ledger.js';
 import { LineageMemory } from './lineage-memory.js';
 import { LineagePersistence } from './lineage-persistence.js';
 import { LineageStrategyMemory } from './lineage-strategy-memory.js';
@@ -22,7 +23,7 @@ describe('worker lineage restart', () => {
       const lineage = new StrategyOutcomeToLineage(firstMemory, persistence);
       const worker = new WorkerLoop(
         new StrategyLearning(undefined, new LineageStrategyMemory(firstMemory)),
-        { record: event => ({ ...event, id: 'event-1', timestamp: new Date().toISOString() }) } as never,
+        { record: (event: Omit<OutcomeEvent, 'id' | 'timestamp'>): OutcomeEvent => ({ ...event, id: 'event-1', timestamp: new Date().toISOString() }) },
         undefined,
         lineage,
         'coding',
