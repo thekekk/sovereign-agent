@@ -11,7 +11,8 @@ describe('lineage evidence decay', () => {
 
     const lesson = memory.lessonsFor('A', 'coding')[0];
     expect(lesson.originId).toBe('parent');
-    expect(lesson.generation).toBe(10);
+    // add() preserves the lesson's original generation; age is calculated from it.
+    expect(lesson.generation).toBe(1);
     expect(memory.effectiveQuality(lesson)).toBeLessThan(lesson.confidence * lesson.evidenceValue);
   });
 
