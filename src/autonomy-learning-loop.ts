@@ -1,8 +1,7 @@
 import type { RecoveryRunner } from './recovery-runner.js';
 import type { OutcomeSummary } from './outcome-ledger.js';
 import type { SurvivalSnapshot } from './survival.js';
-import type { StrategyCandidate, StrategyExperience, LearnedStrategyDecision } from './strategy-learning.js';
-import { StrategyLearningWithMemory } from './strategy-learning-with-memory.js';
+import type { StrategyCandidate, StrategyExperience, LearnedStrategyDecision, StrategyLearning } from './strategy-learning.js';
 import { StrategyController } from './strategy-controller.js';
 
 export interface AutonomyLearningDecision extends LearnedStrategyDecision {
@@ -10,11 +9,11 @@ export interface AutonomyLearningDecision extends LearnedStrategyDecision {
   reason: string;
 }
 
-/** Recovery remains authoritative; lineage learning only selects among work that is safe to attempt. */
+/** Recovery remains authoritative; canonical strategy learning only selects among work that is safe to attempt. */
 export class AutonomyLearningLoop {
   constructor(
     private readonly recovery: Pick<RecoveryRunner, 'reconcile'>,
-    private readonly learning: StrategyLearningWithMemory,
+    private readonly learning: StrategyLearning,
     private readonly policy = new StrategyController()
   ) {}
 
