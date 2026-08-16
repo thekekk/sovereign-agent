@@ -36,6 +36,36 @@ The goal is not to clone any one implementation. It is to build one runtime wher
 - Typed model-directed coding worker with bounded read/replace/test actions
 - Optimistic-concurrency workspace writes
 
+## Cumulative lineage learning
+
+The learning architecture is deliberately **cumulative**. A child does not restart with an empty strategy history.
+
+```text
+verified outcome
+      ↓
+ USE / AVOID lesson
+      ↓
+ LineageMemory + provenance
+      ↓
+ parent snapshot
+      ↓
+ child generation
+      ↓
+ inherited lessons + new experience
+      ↓
+ grandchild inherits the accumulated set
+```
+
+`StrategyLearning` is the canonical bounded selector. It can consume historical strategy experience and optional ancestral `LineageStrategyMemory`. High-confidence `AVOID` lessons penalize a strategy; reusable `USE` lessons provide a bounded preference bonus. Neither can override the survival/recovery policy.
+
+Only durable knowledge is inherited. Runtime state such as active mutations, checkpoints, locks, credentials, unfinished tasks and transient recovery state is not copied into descendants.
+
+A verified coding mutation automatically turns its result into lineage knowledge when an `OutcomeToLineage` sink is attached:
+
+`checkpoint → write → test → verify → USE/AVOID → lineage memory`
+
+This means later generations can exploit proven approaches and avoid previously failed approaches without manually rediscovering them.
+
 ## Evolution / survival loop
 
 The core loop is deliberately evidence-driven:
@@ -61,7 +91,7 @@ The core loop is deliberately evidence-driven:
                    ↓
              survival engine
                    ↓
-             strategy policy
+       strategy + lineage memory
                    ↓
        ┌───────────┼───────────┐
        ↓           ↓           ↓
@@ -97,6 +127,7 @@ The system is intentionally **not unrestricted self-preservation**. The agent ca
 | Survival tiers / low-compute behavior | Native foundation |
 | Mortality state | Native |
 | Strategy selection / evolution | Native foundation |
+| Cumulative lineage learning | Native foundation |
 | Bounded replication / lineage | Native policy layer |
 | Child lifecycle / survival accounting | Native foundation |
 | Skills (`SKILL.md`) | Native registry |
@@ -128,12 +159,29 @@ A coding task can follow:
 
 `goal → inspect → plan → edit → test → observe → evaluate → checkpoint → repeat`
 
+For mutations that participate in learning, the verified path is:
+
+`checkpoint → write → test → verify → record lesson`
+
 Every action can emit an event and every completed task can contribute a measurable value/cost outcome to the economic ledger.
+
+## Canonical architecture rule
+
+There should be one authoritative path for each concern:
+
+- **Policy/recovery:** `AutonomyLearningLoop`
+- **Strategy selection:** `StrategyLearning` + optional `LineageStrategyMemory`
+- **Verified coding mutation:** `VerifiedCodingMutation`
+- **Outcome → lineage:** `OutcomeToLineage`
+- **Generation inheritance:** `GenerationLineage` / `LineageReproduction`
+- **Child CI settlement:** `ChildCiLifecycle` + `GenerationManager`
+
+Compatibility facades may remain temporarily, but new code should use the canonical path rather than creating another parallel implementation.
 
 ## Roadmap
 
-1. **Model-driven patch/edit tool with diff validation** — in progress
-2. **Git checkpoint / rollback workflow** — next
+1. **Model-driven patch/edit tool with diff validation** — foundation present
+2. **Git checkpoint / rollback workflow** — foundation present; hardening/integration continues
 3. **GitHub issue/PR automation**
 4. **OpenHands-compatible coding adapter**
 5. **Durable task economics and compute metering**
