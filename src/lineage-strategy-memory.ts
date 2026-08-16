@@ -1,3 +1,4 @@
+import { resolveLineageConflict } from './lineage-conflict-resolution.js';
 import type { LineageMemory } from './lineage-memory.js';
 import type { StrategyLesson } from './strategy-memory.js';
 
@@ -23,11 +24,19 @@ export class LineageStrategyMemory {
     }));
   }
 
+  resolve(decision: LineageDecisionContext) {
+    return resolveLineageConflict(this.lessonsFor(decision));
+  }
+
   shouldAvoid(decision: LineageDecisionContext, threshold = 0.7): boolean {
-    return this.lessonsFor(decision).some(lesson => lesson.kind === 'avoid' && lesson.confidence >= threshold);
+    const resolved = this.resolve(decision);
+    return resolved.winner === 'avoid' && Math.abs(resolved.score) > 0 && resolved.avoid.some(lesson => lesson.confidence >= threshold);
   }
 
   reusable(decision: LineageDecisionContext, threshold = 0.5): readonly StrategyLesson[] {
-    return this.lessonsFor(decision).filter(lesson => lesson.kind === 'use' && lesson.confidence >= threshold);
+    const resolved = this.resolve(decision);
+    return resolved.winner === 'use'
+      ? resolved.use.filter(lesson => lesson.confidence >= threshold)
+      : [];
   }
 }
