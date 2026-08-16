@@ -12,7 +12,9 @@ A modular autonomous-agent runtime inspired by Conway Automaton, with stronger e
 - Autonomous coding iteration loop
 - Outcome ledger for measuring strategy value, cost and success
 - Survival engine that converts economic/compute health into operational priorities
-- Evolution engine that selects successful strategies and permits controlled worker replication only when the simulated agent is thriving
+- Economy engine that preserves runway before allocating bounded replication budget
+- Evolution and replication policies that select successful strategies and constrain worker growth
+- Explicit mortality state that prevents further actions after terminal death
 - CI/type-checking foundation
 
 ## Survival model
@@ -34,13 +36,14 @@ The lifecycle is:
         ↓                     ↓
  controlled growth       critical
         ↓                     ↓
-  spawn workers*          shutdown
+  bounded replication*   shutdown → dead
 
-* replication is a policy decision; the engine itself does not spawn arbitrary
-  processes, move funds, or evade shutdown controls.
+* replication is an explicitly evaluated policy decision with runway,
+  profitability and worker-count limits. The runtime does not give the
+  model unrestricted process spawning, wallet control or host escape.
 ```
 
-A failed agent can reach a terminal `dead` state in the simulation. A successful agent can earn enough positive value to enter `thriving`, after which the evolution layer may recommend controlled replication. This creates the survival/evolution pressure from the original concept while keeping actual host, wallet and deployment operations behind explicit capability and policy boundaries.
+A failed agent can reach a terminal `dead` state in the simulation and loses the ability to continue acting. A successful agent can earn enough positive value to enter `thriving`; only then can the economic and replication policies recommend bounded growth. This captures the survival/evolution pressure from the original concept without turning safety controls into something the agent can rewrite.
 
 ## Coding loop
 
