@@ -20,7 +20,7 @@ export class LineageMemory {
   inherit(parent: LineageSnapshot): void {
     for (const lesson of parent.lessons) {
       const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
-      const inherited = { ...lesson, generation: this.generation, inheritedFrom: lesson.originId };
+      const inherited = { ...lesson, inheritedFrom: lesson.originId };
       const existing = this.lessons.get(key);
       if (!existing || this.quality(inherited) > this.quality(existing)) {
         this.lessons.set(key, inherited);
