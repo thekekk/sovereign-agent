@@ -1,15 +1,15 @@
-import type { StrategyLesson } from './strategy-memory.js';
+import type { LineageLesson } from './lineage-memory.js';
 
 export interface ResolvedLineageEvidence {
-  use: readonly StrategyLesson[];
-  avoid: readonly StrategyLesson[];
+  use: readonly LineageLesson[];
+  avoid: readonly LineageLesson[];
   winner: 'use' | 'avoid' | 'neutral';
   score: number;
 }
 
 export function resolveLineageConflict(
-  lessons: readonly StrategyLesson[],
-  effectiveQuality?: (lesson: StrategyLesson) => number
+  lessons: readonly LineageLesson[],
+  effectiveQuality?: (lesson: LineageLesson) => number
 ): ResolvedLineageEvidence {
   const use = lessons.filter(lesson => lesson.kind === 'use');
   const avoid = lessons.filter(lesson => lesson.kind === 'avoid');
@@ -18,8 +18,8 @@ export function resolveLineageConflict(
 }
 
 function scoreLessons(
-  lessons: readonly StrategyLesson[],
-  effectiveQuality?: (lesson: StrategyLesson) => number
+  lessons: readonly LineageLesson[],
+  effectiveQuality?: (lesson: LineageLesson) => number
 ): number {
   return lessons.reduce(
     (total, lesson) => total + (effectiveQuality?.(lesson) ?? baseQuality(lesson)),
@@ -27,6 +27,6 @@ function scoreLessons(
   );
 }
 
-function baseQuality(lesson: StrategyLesson): number {
+function baseQuality(lesson: LineageLesson): number {
   return lesson.confidence * Math.max(1, lesson.occurrences) * Math.max(1, Math.abs(lesson.evidenceValue));
 }
