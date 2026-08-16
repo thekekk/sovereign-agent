@@ -1,6 +1,12 @@
 # Sovereign Agent
 
-A modular autonomous-agent runtime inspired by Conway Automaton, with stronger execution controls and a survival/evolution layer for controlled autonomous growth.
+A modular autonomous-agent runtime combining three ideas:
+
+- **Conway Automaton:** durable survival pressure, skills, soul, constitution, lineage and controlled replication.
+- **OpenHands:** composable agent execution, event-driven sessions, sandboxed runtimes and autonomous software-engineering loops.
+- **Goose:** model-provider abstraction, extensible MCP/ACP-style extensions, reusable recipes and multi-session task execution.
+
+The goal is not to clone any one implementation. It is to build one runtime where these capabilities share the same policy, memory, economics and observability layers.
 
 ## Current architecture
 
@@ -10,18 +16,53 @@ A modular autonomous-agent runtime inspired by Conway Automaton, with stronger e
 - Sandboxed command executor with allowlists, workspace containment, timeouts and output limits
 - Heartbeat scheduler
 - Autonomous coding iteration loop
-- Outcome ledger for measuring strategy value, cost and success
-- Survival engine that converts economic/compute health into operational priorities
-- Economy engine that preserves runway before allocating bounded replication budget
-- Evolution and replication policies that select successful strategies and constrain worker growth
-- Explicit mortality state that prevents further actions after terminal death
+- OpenHands-style event stream and sessions
+- Conway-style survival tiers, mortality, outcome ledger and durable economic runway
+- Conway-style skills registry with YAML frontmatter and trigger activation
+- Conway-style evolving `SOUL` state
+- Immutable constitution boundary
+- Bounded lineage and worker proposals
+- Provider-neutral identity abstraction
+- Goose-style multi-provider registry
+- Goose-style extension boundary for native/MCP/ACP adapters
+- Goose-style reusable recipes/task definitions
+- Capability matrix tracking implemented vs adapter/pending features
 - CI/type-checking foundation
+
+## Feature parity status
+
+| Capability | Status |
+|---|---|
+| Persistent survival/economic pressure | Native |
+| Survival tiers / low-compute behavior | Native foundation |
+| Mortality state | Native |
+| Strategy selection / evolution | Native foundation |
+| Bounded replication / lineage | Native policy layer |
+| Skills (`SKILL.md`) | Native registry |
+| Soul / evolving identity document | Native storage |
+| Constitution / protected rules | Native guard |
+| Heartbeat | Native foundation |
+| OpenHands event stream | Native |
+| OpenHands session model | Native |
+| Sandboxed runtime | Native foundation |
+| Autonomous coding loop | Native foundation |
+| Provider abstraction | Native |
+| MCP extension boundary | Adapter boundary |
+| ACP extension boundary | Adapter boundary |
+| Goose recipes | Native definitions |
+| Git/GitHub automation | In progress |
+| Real Conway cloud provisioning | Pending adapter |
+| Real wallet / USDC / x402 payments | Pending adapter |
+| ERC-8004 registration | Pending adapter |
+| Agent-to-agent social relay | Pending adapter |
+| Cloud-scale worker orchestration | Pending adapter |
+| Desktop UI | Not a core goal |
+
+The adapter boundaries are deliberate: they let the runtime adopt the real Conway/OpenHands/Goose integrations without coupling survival logic to a single infrastructure provider.
 
 ## Survival model
 
-The goal is **survival pressure, not unrestricted self-preservation**. The agent receives an explicit resource state: balance, compute burn, revenue, health and historical outcomes. It must optimize useful work and positive unit economics to remain alive in the simulation.
-
-The lifecycle is:
+The objective is **survival pressure, not unrestricted self-preservation**. The agent receives an explicit resource state: balance, compute burn, revenue and historical outcomes. It must create useful value and maintain positive economics to remain viable.
 
 ```text
              useful work
@@ -36,31 +77,34 @@ The lifecycle is:
         ↓                     ↓
  controlled growth       critical
         ↓                     ↓
-  bounded replication*   shutdown → dead
+  bounded replication*  shutdown → dead
 
-* replication is an explicitly evaluated policy decision with runway,
-  profitability and worker-count limits. The runtime does not give the
-  model unrestricted process spawning, wallet control or host escape.
+* replication is an evaluated policy decision with runway,
+  profitability and worker-count limits.
 ```
 
-A failed agent can reach a terminal `dead` state in the simulation and loses the ability to continue acting. A successful agent can earn enough positive value to enter `thriving`; only then can the economic and replication policies recommend bounded growth. This captures the survival/evolution pressure from the original concept without turning safety controls into something the agent can rewrite.
+The agent cannot rewrite the constitution, bypass policy, escape its workspace, arbitrarily spend funds, or create unrestricted child processes just because survival is threatened.
 
 ## Coding loop
 
-The runtime can iterate toward a coding goal by inspecting a workspace, proposing an implementation step, executing permitted tools, running tests, recording the outcome, and feeding the result into the next iteration. Git checkpoints and rollback are intended to make experimentation recoverable.
+A coding task can follow:
+
+`goal → inspect → plan → edit → test → observe → evaluate → checkpoint → repeat`
+
+Every action can emit an event and every completed task can contribute a measurable value/cost outcome to the economic ledger.
 
 ## Roadmap
 
-1. Model-driven file edit tool with patch validation
+1. Model-driven patch/edit tool with diff validation
 2. Git checkpoint / rollback workflow
-3. GitHub issue/PR integration
-4. OpenHands-compatible coding backend
-5. Durable survival state backed by SQLite
-6. Revenue/compute accounting adapters
-7. Controlled worker provisioning with hard quotas
-8. Signed action ledger and identity
-9. Self-evaluation and controlled self-improvement
-10. Optional Conway-compatible economic/replication modules
+3. GitHub issue/PR automation
+4. OpenHands-compatible coding adapter
+5. Durable task economics and compute metering
+6. Real provider adapters (OpenAI/Anthropic/Google/local/etc.)
+7. MCP/ACP transport adapters and extension installation
+8. Conway cloud/wallet/x402/ERC-8004 adapters behind policy gates
+9. Agent-to-agent messaging and child lifecycle health checks
+10. Controlled self-improvement with audit trails and rollback
 
 ## Run
 
