@@ -2,6 +2,7 @@ import type { OutcomeLedger, OutcomeEvent } from './outcome-ledger.js';
 import { StrategyLearning, type StrategyCandidate, type StrategyExperience, type LearnedStrategyDecision } from './strategy-learning.js';
 import type { SurvivalSnapshot } from './survival.js';
 import type { StrategyFitnessAdapter } from './strategy-fitness-adapter.js';
+import type { StrategyOutcomeToLineage } from './strategy-outcome-to-lineage.js';
 
 export interface WorkerExecution {
   strategy: string;
@@ -28,7 +29,10 @@ export class WorkerLoop {
   constructor(
     private readonly learning = new StrategyLearning(),
     private readonly ledger: Pick<OutcomeLedger, 'record'>,
-    private readonly fitness?: StrategyFitnessAdapter
+    private readonly fitness?: StrategyFitnessAdapter,
+    private readonly lineage?: StrategyOutcomeToLineage,
+    private readonly lineageContext = '*',
+    private readonly originId = 'worker-loop'
   ) {}
 
   async run(
@@ -38,7 +42,7 @@ export class WorkerLoop {
     experience: readonly StrategyExperience[],
     runner: WorkerRunner
   ): Promise<WorkerLoopResult> {
-    const decision = this.learning.decide(summary, snapshot, candidates, experience);
+    const decision = this.learning.decide(summary, snapshot, candidates, experience, this.lineageContext);
     if (!decision.selectedStrategy || decision.action === 'stop') {
       return { decision, execution: null, outcome: null };
     }
@@ -63,6 +67,15 @@ export class WorkerLoop {
       verified: execution.success,
       value: execution.value,
       cost: execution.cost
+    });
+
+    this.lineage?.record({
+      strategyId: execution.strategy,
+      context: this.lineageContext,
+      originId: this.originId,
+      verified: execution.success,
+      value: execution.value,
+      lesson: execution.lesson
     });
 
     return { decision, execution, outcome };
