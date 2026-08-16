@@ -25,7 +25,10 @@ describe('lineage lesson quality', () => {
 
   it('aggregates stronger independent evidence instead of replacing provenance', () => {
     const memory = new LineageMemory(3);
-    memory.inherit({ generation: 2, lessons: [{ ...base, id: 'parent', kind: 'use', confidence: 0.8 }] });
+    memory.inherit({
+      generation: 2,
+      lessons: [{ ...base, id: 'parent', originId: 'parent', kind: 'use', confidence: 0.8 }]
+    });
     memory.add({ ...base, id: 'local', originId: 'child', kind: 'use', confidence: 0.95, evidenceValue: 20, occurrences: 2 });
 
     const [lesson] = memory.lessonsFor('A', 'coding');
