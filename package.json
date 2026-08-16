@@ -9,7 +9,8 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ci:signal": "tsx src/ci-signal.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
