@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LineageMemory } from './lineage-memory.js';
 import { LineageStrategyMemory } from './lineage-strategy-memory.js';
-import { StrategyLearningWithMemory } from './strategy-learning-with-memory.js';
+import { StrategyLearning } from './strategy-learning.js';
 
 const lesson = (strategyId: string, kind: 'use' | 'avoid', confidence: number, generation = 1) => ({
   id: `${kind}:${strategyId}:build`, strategyId, kind, context: 'build', lesson: `${kind} ${strategyId}`,
@@ -32,7 +32,7 @@ describe('lineage learning', () => {
     const lineage = new LineageMemory(2);
     lineage.add(lesson('good', 'use', 0.9));
     lineage.add(lesson('bad', 'avoid', 0.95));
-    const selector = new StrategyLearningWithMemory(new LineageStrategyMemory(lineage));
+    const selector = new StrategyLearning(new StrategyController(), new LineageStrategyMemory(lineage));
 
     const result = selector.decide(
       { attempts: 0, successfulAttempts: 0, verifiedValue: 0, totalCost: 0 } as never,
