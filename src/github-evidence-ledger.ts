@@ -1,14 +1,16 @@
 import { GitHubEvidenceAdapter, type GitHubRunEvidenceInput } from './github-evidence.js';
-import { TaskEconomics, type TaskEconomicInput } from './task-economics.js';
+import { TaskEconomics, type TaskEconomicsInput } from './task-economics.js';
 import type { OutcomeLedger } from './outcome-ledger.js';
 
 export interface VerifiedGitHubOutcome {
   verified: boolean;
   value: number;
+  netValue: number;
+  profitable: boolean;
   reason: string;
 }
 
-/** Converts independently verified GitHub CI outcomes into ledger economics. */
+/** Converts independently verified GitHub CI outcomes into economic outcomes. */
 export class GitHubEvidenceLedger {
   constructor(
     private readonly adapter = new GitHubEvidenceAdapter(),
@@ -16,28 +18,34 @@ export class GitHubEvidenceLedger {
     private readonly ledger?: OutcomeLedger
   ) {}
 
-  record(input: GitHubRunEvidenceInput, task: TaskEconomicInput): VerifiedGitHubOutcome {
+  record(input: GitHubRunEvidenceInput, task: TaskEconomicsInput): VerifiedGitHubOutcome {
     const result = this.adapter.verify(input);
-    const value = result.verified ? this.economics.calculate(task).value : 0;
+    const economicInput: TaskEconomicsInput = {
+      ...task,
+      value: result.verified ? task.value : 0,
+      success: result.verified,
+      source: 'github-actions',
+      metadata: {
+        ...(task.metadata ?? {}),
+        verified: result.verified,
+        runId: input.runId,
+        workflow: input.workflow,
+        sourceCommit: input.sourceCommit,
+        reason: result.reason
+      }
+    };
+    const economics = this.economics.record(economicInput);
 
     if (this.ledger) {
-      this.ledger.record({
-        taskId: task.taskId,
-        kind: result.verified ? 'success' : 'failure',
-        durationMs: task.finishedAt - task.startedAt,
-        cost: task.computeRatePerMs * Math.max(0, task.finishedAt - task.startedAt),
-        value,
-        source: 'github-actions',
-        metadata: {
-          verified: result.verified,
-          runId: input.runId,
-          workflow: input.workflow,
-          sourceCommit: input.sourceCommit,
-          reason: result.reason
-        }
-      });
+      this.ledger.record(economics.event);
     }
 
-    return { verified: result.verified, value, reason: result.reason };
+    return {
+      verified: result.verified,
+      value: economicInput.value,
+      netValue: economics.netValue,
+      profitable: economics.profitable,
+      reason: result.reason
+    };
   }
 }
