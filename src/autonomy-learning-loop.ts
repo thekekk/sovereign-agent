@@ -31,6 +31,7 @@ export class AutonomyLearningLoop {
       return {
         ...policy,
         allowed: false,
+        action: 'stop',
         reason: `recovery required: ${recovery.reason}`,
         selectedStrategy: null,
         confidence: 0
