@@ -6,12 +6,15 @@ if (status !== 'success' && status !== 'failure' && status !== 'cancelled') {
   process.exit(2);
 }
 
+const sourceCommit = process.env.SOVEREIGN_SOURCE_SHA ?? process.env.GITHUB_SHA ?? 'unknown';
 const signal = {
-  schema: 1,
+  schema: 2,
   source: 'github-actions',
   workflow: process.env.GITHUB_WORKFLOW ?? 'unknown',
   runId: process.env.GITHUB_RUN_ID ?? 'unknown',
   commit: process.env.GITHUB_SHA ?? 'unknown',
+  sourceCommit,
+  event: process.env.GITHUB_EVENT_NAME ?? 'unknown',
   status,
   timestamp: new Date().toISOString()
 };
