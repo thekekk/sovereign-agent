@@ -16,3 +16,13 @@ jobs:
       - run: npm install
       - run: npm run typecheck
       - run: npm test
+      - name: Emit outcome signal
+        if: always()
+        run: npm run ci:signal -- "${{ job.status }}"
+      - name: Upload outcome signal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-outcome-${{ github.run_id }}
+          path: .sovereign/ci-signal.json
+          if-no-files-found: error
