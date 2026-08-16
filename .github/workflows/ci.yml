@@ -18,6 +18,8 @@ jobs:
       - run: npm test
       - name: Emit outcome signal
         if: always()
+        env:
+          SOVEREIGN_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: npm run ci:signal -- "${{ job.status }}"
       - name: Upload outcome signal
         if: always()
