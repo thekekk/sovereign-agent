@@ -9,7 +9,7 @@ export class Agent {
     private readonly model: Model,
     private readonly memory = new Memory(),
     private readonly tools = new ToolRegistry(),
-    private readonly policy = new Policy()
+    private readonly policyStore = new Policy()
   ) {}
 
   async run(goal: string): Promise<{ task: Task; output: string }> {
@@ -44,7 +44,7 @@ export class Agent {
     }
   }
 
-  get policy(): Policy { return this.policy; }
+  get policy(): Policy { return this.policyStore; }
   get memoryStore(): Memory { return this.memory; }
   get toolRegistry(): ToolRegistry { return this.tools; }
 }
