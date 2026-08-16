@@ -14,6 +14,6 @@ export class AutonomyLoop {
     if (!recovery.safeToContinue) {
       return { allowed: false, reason: `recovery required: ${recovery.reason}` };
     }
-    return { allowed: true, reason: 'recovery reconciled; mutation permitted' };
+    return { allowed: true, reason: recovery.reason };
   }
 }
