@@ -1,55 +1,44 @@
 import type { Model } from './types.js';
-import { ToolRegistry } from './tools.js';
-import { Policy } from './policy.js';
-import { GitWorkspace } from './git-workspace.js';
-import type { Workspace } from './workspace.js';
+import type { SandboxedExecutor, ExecResult } from './executor.js';
+
+export interface CodingLoopConfig {
+  maxIterations: number;
+  testCommand: string;
+  testArgs: string[];
+}
 
 export interface CodingIteration {
-  plan: string;
-  result: string;
-  checkpoint?: string;
+  iteration: number;
+  proposal: string;
+  test: ExecResult;
 }
 
 export class CodingLoop {
   constructor(
     private readonly model: Model,
-    private readonly tools: ToolRegistry,
-    private readonly policy: Policy,
-    private readonly git: GitWorkspace,
-    private readonly workspace: Workspace
+    private readonly executor: SandboxedExecutor,
+    private readonly config: CodingLoopConfig = {
+      maxIterations: Number(process.env.SOVEREIGN_MAX_ITERATIONS ?? 5),
+      testCommand: process.env.SOVEREIGN_TEST_COMMAND ?? 'npm',
+      testArgs: (process.env.SOVEREIGN_TEST_ARGS ?? 'test').split(' ').filter(Boolean)
+    }
   ) {}
 
-  async run(goal: string, maxIterations = 5): Promise<CodingIteration[]> {
-    await this.workspace.init();
-    const history: CodingIteration[] = [];
-
-    for (let i = 0; i < maxIterations; i++) {
-      const context = await this.git.status();
-      const prompt = [
-        'You are the coding loop of Sovereign Agent.',
-        'Produce one small, reversible engineering step at a time.',
-        'Never claim a file was changed unless the execution tool actually performed it.',
-        'Prefer tests and checkpoints after meaningful changes.',
+  async run(goal: string): Promise<CodingIteration[]> {
+    const results: CodingIteration[] = [];
+    for (let iteration = 1; iteration <= this.config.maxIterations; iteration++) {
+      const proposal = await this.model.complete([
+        'You are a coding agent operating inside a controlled workspace.',
+        'Do not claim files were changed unless a tool actually changed them.',
         `Goal: ${goal}`,
-        `Iteration: ${i + 1}/${maxIterations}`,
-        `Workspace git status:\n${context.stdout || '(clean)'}`,
-        `Available capabilities:\n${this.tools.list().map(t => `${t.name} [${t.risk}] - ${t.description}`).join('\n') || '(none)'}`
-      ].join('\n\n');
-
-      const plan = await this.model.complete(prompt);
-      const approval = this.policy.authorize('write');
-      if (!approval.allowed) {
-        history.push({ plan, result: `Execution blocked: ${approval.reason}` });
-        break;
-      }
-
-      // Execution is deliberately explicit: a future coding backend will turn the plan into tool calls.
-      // This boundary prevents the model from silently obtaining shell/Git access.
-      const result = 'Plan generated. No write tool is attached yet; awaiting an approved coding backend.';
-      const checkpoint = (await this.git.status()).code === 0 ? undefined : undefined;
-      history.push({ plan, result, checkpoint });
-      if (result.includes('awaiting')) break;
+        `Iteration: ${iteration}/${this.config.maxIterations}`,
+        results.length ? `Previous test result:\n${JSON.stringify(results.at(-1)?.test)}` : 'No tests have run yet.',
+        'Return the next implementation step.'
+      ].join('\n'));
+      const test = await this.executor.execute({ command: this.config.testCommand, args: this.config.testArgs, timeoutMs: 120_000 }, { taskId: `coding-${Date.now()}-${iteration}` });
+      results.push({ iteration, proposal, test });
+      if (test.code === 0) break;
     }
-    return history;
+    return results;
   }
 }
