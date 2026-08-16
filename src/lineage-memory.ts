@@ -20,14 +20,10 @@ export class LineageMemory {
   inherit(parent: LineageSnapshot): void {
     for (const lesson of parent.lessons) {
       const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
+      const inherited = { ...lesson, generation: this.generation, inheritedFrom: lesson.originId };
       const existing = this.lessons.get(key);
-      if (!existing || this.quality(lesson) > this.quality(existing)) {
-        this.lessons.set(key, {
-          ...lesson,
-          originId: lesson.originId,
-          generation: this.generation,
-          inheritedFrom: lesson.originId
-        });
+      if (!existing || this.quality(inherited) > this.quality(existing)) {
+        this.lessons.set(key, inherited);
       }
     }
   }
@@ -36,7 +32,7 @@ export class LineageMemory {
     const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
     const existing = this.lessons.get(key);
     if (!existing || this.quality(lesson) > this.quality(existing)) {
-      this.lessons.set(key, { ...lesson, generation: this.generation });
+      this.lessons.set(key, { ...lesson });
     }
   }
 
@@ -52,8 +48,7 @@ export class LineageMemory {
 
   effectiveQuality(lesson: LineageLesson): number {
     const age = Math.max(0, this.generation - lesson.generation);
-    const decay = Math.pow(0.9, age);
-    return this.baseQuality(lesson) * decay;
+    return this.baseQuality(lesson) * Math.pow(0.9, age);
   }
 
   private quality(lesson: LineageLesson): number {
