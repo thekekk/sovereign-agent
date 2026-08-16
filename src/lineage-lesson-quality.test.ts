@@ -23,15 +23,15 @@ describe('lineage lesson quality', () => {
     expect(lesson.evidenceValue).toBe(10);
   });
 
-  it('keeps stronger evidence when inherited and locally observed', () => {
+  it('aggregates stronger independent evidence instead of replacing provenance', () => {
     const memory = new LineageMemory(3);
     memory.inherit({ generation: 2, lessons: [{ ...base, id: 'parent', kind: 'use', confidence: 0.8 }] });
-    memory.add({ ...base, id: 'local', kind: 'use', confidence: 0.95, evidenceValue: 20, occurrences: 2 });
+    memory.add({ ...base, id: 'local', originId: 'child', kind: 'use', confidence: 0.95, evidenceValue: 20, occurrences: 2 });
 
     const [lesson] = memory.lessonsFor('A', 'coding');
-    expect(lesson.id).toBe('local');
-    expect(lesson.confidence).toBe(0.95);
-    expect(lesson.evidenceValue).toBe(20);
-    expect(lesson.occurrences).toBe(2);
+    expect(lesson.originId).toBe('parent');
+    expect(lesson.evidenceValue).toBe(30);
+    expect(lesson.occurrences).toBe(3);
+    expect(lesson.confidence).toBeGreaterThan(0.8);
   });
 });
