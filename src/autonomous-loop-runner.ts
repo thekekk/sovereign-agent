@@ -9,11 +9,7 @@ export interface AutonomousLoopRunResult {
   iteration?: AutonomousIterationResult;
 }
 
-/**
- * Real execution boundary: preflight policy is evaluated before work is allowed
- * to run; the existing iteration runner remains responsible for checkpoint,
- * economics, recovery, and post-work strategy evaluation.
- */
+/** Real execution boundary: failed recovery latches the outer controller before any further mutation. */
 export class AutonomousLoopRunner {
   private readonly strategy: StrategyController;
 
@@ -22,9 +18,7 @@ export class AutonomousLoopRunner {
     private readonly iteration: AutonomousIteration,
     private readonly ledger: OutcomeLedger,
     strategy = new StrategyController(),
-  ) {
-    this.strategy = strategy;
-  }
+  ) { this.strategy = strategy; }
 
   async run(input: AutonomousIterationInput, context: ToolContext): Promise<AutonomousLoopRunResult> {
     const preflight = this.strategy.decide(this.ledger.summary(), input.survival);
@@ -32,6 +26,9 @@ export class AutonomousLoopRunner {
     if (!authorized.completed) return { authorized };
 
     const iteration = await this.iteration.run(input, context);
+    if (iteration.recovery && !iteration.recovery.rolledBack) {
+      this.controller.halt(`recovery failed: ${iteration.recovery.reason}`);
+    }
     return { authorized, iteration };
   }
 }
