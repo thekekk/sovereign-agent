@@ -1,1 +1,0 @@
-Opportunity runtime documentation is maintained in README.md. The runtime now includes broad domain discovery, freshness, deduplication, provider health, economic/risk policy, wallet capability checks, bounded execution, outcomes and lineage learning.
