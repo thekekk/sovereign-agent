@@ -15,6 +15,32 @@ export interface RawOpportunity {
   observedAt?: string;
 }
 
+export interface NormalizableOpportunity extends RawOpportunity {
+  domain: OpportunityDomain;
+}
+
+export const normalizeOpportunity = (raw: NormalizableOpportunity): Opportunity => {
+  const evidence: OpportunityEvidence = {
+    source: raw.signal,
+    observedAt: raw.observedAt ?? new Date().toISOString(),
+    confidence: Math.max(0, Math.min(1, raw.confidence)),
+    signal: raw.signal
+  };
+  return {
+    id: raw.id,
+    domain: raw.domain,
+    venue: raw.venue,
+    asset: raw.asset,
+    estimatedValue: Math.max(0, raw.value),
+    estimatedCost: Math.max(0, raw.cost),
+    risk: Math.max(0, Math.min(1, raw.risk ?? 0.5)),
+    urgency: Math.max(0, Math.min(1, raw.urgency ?? 0.5)),
+    liquidity: Math.max(0, Math.min(1, raw.liquidity ?? 0.5)),
+    evidence: [evidence],
+    requiredService: raw.requiredService
+  };
+};
+
 export interface LiveOpportunityProvider {
   readonly name: string;
   discover(domain: OpportunityDomain, signal: AbortSignal): Promise<readonly RawOpportunity[]>;
@@ -26,28 +52,6 @@ export class LiveOpportunitySource {
   async discover(domain: OpportunityDomain, signal: AbortSignal): Promise<Opportunity[]> {
     const batches = await Promise.all(this.providers.map(provider => provider.discover(domain, signal)));
     const now = new Date().toISOString();
-    return batches.flat().map(raw => this.normalize(domain, raw, now));
-  }
-
-  private normalize(domain: OpportunityDomain, raw: RawOpportunity, fallbackTime: string): Opportunity {
-    const evidence: OpportunityEvidence = {
-      source: raw.signal,
-      observedAt: raw.observedAt ?? fallbackTime,
-      confidence: Math.max(0, Math.min(1, raw.confidence)),
-      signal: raw.signal
-    };
-    return {
-      id: raw.id,
-      domain,
-      venue: raw.venue,
-      asset: raw.asset,
-      estimatedValue: Math.max(0, raw.value),
-      estimatedCost: Math.max(0, raw.cost),
-      risk: Math.max(0, Math.min(1, raw.risk ?? 0.5)),
-      urgency: Math.max(0, Math.min(1, raw.urgency ?? 0.5)),
-      liquidity: Math.max(0, Math.min(1, raw.liquidity ?? 0.5)),
-      evidence: [evidence],
-      requiredService: raw.requiredService
-    };
+    return batches.flat().map(raw => normalizeOpportunity({ ...raw, domain, observedAt: raw.observedAt ?? now }));
   }
 }
