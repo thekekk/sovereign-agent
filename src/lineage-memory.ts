@@ -4,6 +4,8 @@ export interface LineageLesson extends StrategyLesson {
   originId: string;
   generation: number;
   inheritedFrom?: string;
+  quarantined?: boolean;
+  contradictionCount?: number;
 }
 
 export interface LineageSnapshot {
@@ -11,7 +13,6 @@ export interface LineageSnapshot {
   lessons: readonly LineageLesson[];
 }
 
-/** Knowledge inheritance only: transient runtime state is deliberately excluded. */
 export class LineageMemory {
   private readonly lessons = new Map<string, LineageLesson>();
 
@@ -22,9 +23,7 @@ export class LineageMemory {
       const key = `${lesson.strategyId}:${lesson.kind}:${lesson.context}:${lesson.lesson}`;
       const inherited = { ...lesson, inheritedFrom: lesson.originId };
       const existing = this.lessons.get(key);
-      if (!existing || this.quality(inherited) > this.quality(existing)) {
-        this.lessons.set(key, inherited);
-      }
+      if (!existing || this.quality(inherited) > this.quality(existing)) this.lessons.set(key, inherited);
     }
   }
 
@@ -35,32 +34,27 @@ export class LineageMemory {
       this.lessons.set(key, { ...lesson });
       return;
     }
-
-    // The same origin reporting the same lesson is one observation, not two.
     if (existing.originId === lesson.originId) return;
 
-    // Independent origins strengthen the evidence, but confidence is capped so
-    // repeated observations cannot manufacture certainty.
+    const contradiction = existing.kind !== lesson.kind;
+    const contradictionCount = (existing.contradictionCount ?? 0) + (contradiction ? 1 : 0);
+    const quarantined = existing.quarantined || contradictionCount >= 2;
     const combined: LineageLesson = {
       ...existing,
       evidenceValue: existing.evidenceValue + lesson.evidenceValue,
       occurrences: existing.occurrences + Math.max(1, lesson.occurrences),
-      confidence: Math.min(0.95, existing.confidence + (lesson.confidence * (1 - existing.confidence) * 0.25)),
-      generation: Math.min(existing.generation, lesson.generation)
+      confidence: Math.min(0.95, existing.confidence + lesson.confidence * (1 - existing.confidence) * 0.25),
+      generation: Math.min(existing.generation, lesson.generation),
+      contradictionCount,
+      quarantined
     };
-    if (this.quality(combined) >= this.quality(existing)) {
-      this.lessons.set(key, combined);
-    }
+    if (this.quality(combined) >= this.quality(existing)) this.lessons.set(key, combined);
   }
 
-  snapshot(): LineageSnapshot {
-    return { generation: this.generation, lessons: [...this.lessons.values()] };
-  }
+  snapshot(): LineageSnapshot { return { generation: this.generation, lessons: [...this.lessons.values()] }; }
 
   lessonsFor(strategyId: string, context: string): LineageLesson[] {
-    return [...this.lessons.values()].filter(
-      lesson => lesson.strategyId === strategyId && (lesson.context === context || lesson.context === '*')
-    );
+    return [...this.lessons.values()].filter(l => l.strategyId === strategyId && (l.context === context || l.context === '*'));
   }
 
   effectiveQuality(lesson: LineageLesson): number {
@@ -68,10 +62,7 @@ export class LineageMemory {
     return this.baseQuality(lesson) * Math.pow(0.9, age);
   }
 
-  private quality(lesson: LineageLesson): number {
-    return this.effectiveQuality(lesson);
-  }
-
+  private quality(lesson: LineageLesson): number { return this.effectiveQuality(lesson); }
   private baseQuality(lesson: LineageLesson): number {
     return lesson.confidence * Math.max(1, lesson.occurrences) * Math.max(1, Math.abs(lesson.evidenceValue));
   }
