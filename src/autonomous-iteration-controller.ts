@@ -18,31 +18,28 @@ export interface AutonomousIterationControllerConfig {
 /** Hard outer bound around autonomous mutation: recovery and iteration limits are authoritative. */
 export class AutonomousIterationController {
   private iterations = 0;
+  private haltedReason?: string;
 
-  constructor(
-    private readonly gate: IterationGate,
-    private readonly config: AutonomousIterationControllerConfig
-  ) {
-    if (!Number.isInteger(config.maxIterations) || config.maxIterations < 1) {
-      throw new Error('maxIterations must be a positive integer');
-    }
+  constructor(private readonly gate: IterationGate, private readonly config: AutonomousIterationControllerConfig) {
+    if (!Number.isInteger(config.maxIterations) || config.maxIterations < 1) throw new Error('maxIterations must be a positive integer');
   }
 
   async authorize(decision: StrategyDecision): Promise<IterationResult> {
-    if (decision.action === 'stop') {
-      return { decision, completed: false, stopped: true, reason: 'strategy stop is authoritative' };
-    }
-    if (this.iterations >= this.config.maxIterations) {
-      return { decision, completed: false, stopped: true, reason: 'iteration limit reached' };
-    }
+    if (decision.action === 'stop') return { decision, completed: false, stopped: true, reason: 'strategy stop is authoritative' };
+    if (this.haltedReason) return { decision, completed: false, stopped: true, reason: this.haltedReason };
+    if (this.iterations >= this.config.maxIterations) return { decision, completed: false, stopped: true, reason: 'iteration limit reached' };
     const gate = await this.gate.beforeMutation();
-    if (!gate.allowed) {
-      return { decision, completed: false, stopped: true, reason: gate.reason };
-    }
+    if (!gate.allowed) return { decision, completed: false, stopped: true, reason: gate.reason };
     this.iterations += 1;
     return { decision, completed: true, stopped: false, reason: gate.reason };
   }
 
-  reset(): void { this.iterations = 0; }
+  halt(reason: string): void {
+    if (!reason.trim()) throw new Error('halt reason is required');
+    this.haltedReason = reason;
+  }
+
+  reset(): void { this.iterations = 0; this.haltedReason = undefined; }
   get count(): number { return this.iterations; }
+  get halted(): boolean { return this.haltedReason !== undefined; }
 }
