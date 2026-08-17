@@ -7,14 +7,38 @@ export interface ResolvedLineageEvidence {
   score: number;
 }
 
+const QUARANTINE_CONTRADICTIONS = 2;
+
 export function resolveLineageConflict(
   lessons: readonly LineageLesson[],
   effectiveQuality?: (lesson: LineageLesson) => number
 ): ResolvedLineageEvidence {
-  const use = lessons.filter(lesson => lesson.kind === 'use');
-  const avoid = lessons.filter(lesson => lesson.kind === 'avoid');
-  const score = scoreLessons(use, effectiveQuality) - scoreLessons(avoid, effectiveQuality);
-  return { use, avoid, winner: score > 0 ? 'use' : score < 0 ? 'avoid' : 'neutral', score };
+  const rawUse = lessons.filter(lesson => lesson.kind === 'use');
+  const rawAvoid = lessons.filter(lesson => lesson.kind === 'avoid');
+  const useScore = scoreLessons(rawUse, effectiveQuality);
+  const avoidScore = scoreLessons(rawAvoid, effectiveQuality);
+  const score = useScore - avoidScore;
+
+  // Repeated independent contradiction quarantines the losing knowledge from
+  // downstream reuse. We keep it out of the returned reusable set, while the
+  // underlying lesson remains stored for provenance/audit and future evidence.
+  const use = score < 0 && independentOrigins(rawAvoid).size >= QUARANTINE_CONTRADICTIONS
+    ? []
+    : rawUse;
+  const avoid = score > 0 && independentOrigins(rawUse).size >= QUARANTINE_CONTRADICTIONS
+    ? []
+    : rawAvoid;
+
+  return {
+    use,
+    avoid,
+    winner: score > 0 ? 'use' : score < 0 ? 'avoid' : 'neutral',
+    score
+  };
+}
+
+function independentOrigins(lessons: readonly LineageLesson[]): Set<string> {
+  return new Set(lessons.map(lesson => lesson.originId));
 }
 
 function scoreLessons(
