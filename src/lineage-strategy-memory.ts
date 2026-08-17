@@ -15,7 +15,8 @@ export class LineageStrategyMemory {
   }
 
   resolve(decision: LineageDecisionContext) {
-    return resolveLineageConflict(this.lessonsFor(decision), lesson => this.lineage.effectiveQuality(lesson));
+    const usable = this.lessonsFor(decision).filter(lesson => !lesson.quarantined);
+    return resolveLineageConflict(usable, lesson => this.lineage.effectiveQuality(lesson));
   }
 
   shouldAvoid(decision: LineageDecisionContext, threshold = 0.7): boolean {
