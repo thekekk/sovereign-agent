@@ -31,9 +31,19 @@ export class LiveOpportunityAdapter implements OpportunityAdapter {
   async discover(signal: AbortSignal): Promise<readonly Opportunity[]> {
     const raw = await this.feed.fetch(signal);
     return raw.map(item => normalizeOpportunity({
-      ...item,
-      domain: this.domain,
-      observedAt: item.observedAt ?? new Date().toISOString()
+      id: item.id,
+      venue: item.venue,
+      asset: item.asset,
+      value: item.estimatedValue,
+      cost: item.estimatedCost,
+      risk: item.risk,
+      urgency: item.urgency,
+      liquidity: item.liquidity,
+      requiredService: item.requiredService,
+      signal: item.signal || item.source,
+      confidence: item.confidence,
+      observedAt: item.observedAt,
+      domain: this.domain
     }));
   }
 }
