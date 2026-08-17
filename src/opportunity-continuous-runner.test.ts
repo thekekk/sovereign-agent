@@ -19,7 +19,7 @@ describe('continuous opportunity runner', () => {
       [{ domain: 'crypto', discover: async () => [makeOpportunity('a', 100), makeOpportunity('b', 20)] }],
       wallet,
       { execute: async opportunity => { seen.push(opportunity.id); return { success: true, value: opportunity.estimatedValue - 5 }; } },
-      { record: outcome => recorded.push(outcome.opportunityId) }, controller, { maxCycles: 2 }
+      { record: outcome => { recorded.push(outcome.opportunityId); } }, controller, { maxCycles: 2 }
     );
     const result = await runner.run();
     expect(result.cycles).toBe(2);
