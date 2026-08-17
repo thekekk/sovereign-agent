@@ -48,9 +48,9 @@ describe('AutonomousLoopRunner', () => {
     let ran = false;
 
     const result = await runner.run({
-      taskId: 'e2e-2', taskValue: 10, costPerHour: 1, costPerHour: 1, survival,
+      taskId: 'e2e-2', taskValue: 10, costPerHour: 1, survival,
       work: async () => { ran = true; return { success: true }; }
-    } as never, { taskId: 'e2e-2' });
+    }, { taskId: 'e2e-2' });
 
     expect(result.authorized.stopped).toBe(true);
     expect(ran).toBe(false);
