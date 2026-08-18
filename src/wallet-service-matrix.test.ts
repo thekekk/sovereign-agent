@@ -6,7 +6,7 @@ const wallet: WalletCapability = {
   walletId: 'w1', canExecute: true, domains: ['crypto', 'mint'], services: ['exchange-a', 'mint-x']
 };
 const opportunity = (requiredService?: string): Opportunity => ({
-  id: 'o1', domain: 'crypto', venue: 'v', estimatedValue: 100, estimatedCost: 10, risk: .1,
+  id: 'o1', domain: 'crypto', venue: 'v', asset: 'asset-1', estimatedValue: 100, estimatedCost: 10, risk: .1,
   urgency: .5, liquidity: .9, requiredService, evidence: []
 });
 
