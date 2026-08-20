@@ -6,6 +6,10 @@ export function registerLiveFeeds(
   feeds: readonly LiveDomainFeed[]
 ): void {
   for (const feed of feeds) {
-    registry.register(new LiveOpportunityAdapter(feed.domain, feed));
+    const adapter = new LiveOpportunityAdapter(feed.domain, feed);
+    registry.register({
+      id: `live:${feed.domain}`,
+      discover: signal => adapter.discover(signal)
+    });
   }
 }
