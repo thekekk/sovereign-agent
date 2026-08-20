@@ -3,6 +3,7 @@ import { OpportunityDiscoveryPipeline } from './opportunity-discovery-pipeline.j
 import { OpportunityDecisionPolicy } from './opportunity-decision-policy.js';
 import { OpportunityExecutionOrchestrator } from './opportunity-execution-orchestrator.js';
 import { OpportunityDecisionGate } from './opportunity-decision-gate.js';
+import { DomainPolicyGate } from './domain-policy-gate.js';
 
 export interface OpportunityRuntimeResult {
   discovered: number;
@@ -18,13 +19,16 @@ export class OpportunityRuntime {
     private readonly discovery: OpportunityDiscoveryPipeline,
     private readonly decision: OpportunityDecisionPolicy,
     private readonly execution: OpportunityExecutionOrchestrator,
-    private readonly gate: OpportunityDecisionGate
+    private readonly gate: OpportunityDecisionGate,
+    private readonly domainPolicy: DomainPolicyGate
   ) {}
 
   async run(wallet: WalletCapability, signal?: AbortSignal): Promise<OpportunityRuntimeResult> {
     const found = await this.discovery.discover(signal);
     const candidates = found.opportunities;
-    const eligibleCandidates = candidates.filter(opportunity => this.gate.evaluate(opportunity, wallet).allowed);
+    const eligibleCandidates = candidates.filter(opportunity =>
+      this.domainPolicy.evaluate(opportunity).allowed && this.gate.evaluate(opportunity, wallet).allowed
+    );
     const selected = this.decision.best(eligibleCandidates, wallet);
     if (!selected) return {
       discovered: candidates.length,
