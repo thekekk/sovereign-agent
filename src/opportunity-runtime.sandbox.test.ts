@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { OpportunityRuntime } from './opportunity-runtime.js';
 import { DomainPolicyGate } from './domain-policy-gate.js';
+import { OpportunityExecutionOrchestrator } from './opportunity-execution-orchestrator.js';
+import { OpportunityExecutorRegistry } from './opportunity-executor-registry.js';
+import { SandboxExecutor } from './sandbox-executor.js';
+import { ExecutionLimitsGuard } from './execution-limits.js';
 import type { Opportunity } from './opportunity-bus.js';
 
 const opportunity: Opportunity = {
@@ -11,18 +15,21 @@ const opportunity: Opportunity = {
 };
 
 describe('opportunity runtime sandbox path', () => {
-  it('passes discovery and gates before sandbox execution', async () => {
+  it('reaches the real sandbox executor through the runtime', async () => {
     const discovery = { discover: async () => ({ opportunities: [opportunity], staleCount: 0, providerCount: 1 }) } as any;
     const decision = { best: (items: Opportunity[]) => items[0] ? { opportunity: items[0], execute: true, reason: 'best', score: 1 } : undefined } as any;
-    const execution = { execute: async () => ({ opportunityId: opportunity.id, domain: opportunity.domain, venue: opportunity.venue, authorization: { decision: 'execute', reason: 'ok', opportunityId: opportunity.id }, startedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), success: true }) } as any;
-    const gate = { evaluate: () => ({ allowed: true, reason: 'capable', opportunity }) } as any;
+    const gate = { authorize: () => ({ decision: 'execute', reason: 'test', opportunityId: opportunity.id }) } as any;
+    const executors = new OpportunityExecutorRegistry();
+    executors.register(new SandboxExecutor());
+    const learning = { record: () => undefined } as any;
+    const execution = new OpportunityExecutionOrchestrator(gate, executors, learning, undefined, new ExecutionLimitsGuard({ maxEstimatedCost: 100, maxEstimatedRisk: .5 }));
+    const capabilityGate = { evaluate: () => ({ allowed: true, reason: 'capable', opportunity }) } as any;
     const domainPolicy = new DomainPolicyGate([{ domain: 'crypto', enabled: true, minEvidenceScore: .4, maxRisk: .5 }]);
-    const runtime = new OpportunityRuntime(discovery, decision, execution, gate, domainPolicy);
+    const runtime = new OpportunityRuntime(discovery, decision, execution, capabilityGate, domainPolicy);
     const wallet = { walletId: 'sandbox-wallet', canExecute: true, domains: ['crypto' as const], services: ['sandbox'] };
     const result = await runtime.run(wallet);
     expect(result.selectedId).toBe(opportunity.id);
-    expect(result.eligible).toBe(1);
-    expect(result.rejected).toBe(0);
     expect(result.execution?.success).toBe(true);
+    expect(result.execution?.provenance.walletId).toBe(wallet.walletId);
   });
 });
