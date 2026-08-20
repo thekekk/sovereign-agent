@@ -1,0 +1,28 @@
+name: Agent Dry Run
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AGENT_MODE: dry-run
+      AGENT_MAX_EXECUTION_VALUE: '0'
+      AGENT_POLL_INTERVAL_MS: '30000'
+      AGENT_BOOTSTRAP: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --run
