@@ -5,6 +5,7 @@ import { OpportunityRuntime } from './opportunity-runtime.js';
 import { DomainPolicyGate } from './domain-policy-gate.js';
 import { DEFAULT_DOMAIN_POLICIES } from './domain-opportunity-config.js';
 import { ExecutionLimitsGuard } from './execution-limits.js';
+import { OpportunityExecutionGate } from './opportunity-execution-gate.js';
 
 export interface RuntimeDependencies {
   discovery: ConstructorParameters<typeof OpportunityRuntime>[0];
@@ -17,7 +18,7 @@ export function createRuntime(dependencies: RuntimeDependencies, env?: Record<st
   const config: RuntimeConfig = loadRuntimeConfig(env);
   if (config.mode !== 'sandbox') throw new Error('live runtime assembly requires a dedicated live executor factory');
   const registry = createSandboxExecutorRegistry();
-  const executionGate = { authorize: () => ({ decision: 'execute' as const, reason: 'sandbox runtime', opportunityId: '' }) };
+  const executionGate = new OpportunityExecutionGate();
   const execution = new OpportunityExecutionOrchestrator(
     executionGate,
     registry,
