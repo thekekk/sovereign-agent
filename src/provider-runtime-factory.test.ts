@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { createConfiguredProviderRegistry } from './provider-runtime-factory.js';
 
-const feed = (domain: 'crypto' | 'xstocks') => ({ domain, discover: async () => [] });
+const feed = (domain: 'crypto' | 'xstocks') => ({
+  domain,
+  fetch: async () => []
+});
 
 describe('configured provider runtime', () => {
   it('registers only enabled configured domains', async () => {
