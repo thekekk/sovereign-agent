@@ -13,6 +13,8 @@
     "ci:signal": "tsx src/ci-signal.ts"
   },
   "dependencies": {
+    "@noble/curves": "^1.9.0",
+    "@noble/hashes": "^1.8.0",
     "better-sqlite3": "^11.0.0",
     "openai": "^6.0.0",
     "yaml": "^2.0.0",
